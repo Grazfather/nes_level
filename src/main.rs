@@ -1,4 +1,5 @@
 pub mod rom;
+pub mod mem;
 use std::fmt;
 
 #[derive(Debug)]
@@ -34,14 +35,14 @@ const ADC_I: u8 = 0x69; // Add immediate
 
 struct CPU {
     regs: Registers,
-    memory: [u8; 0x800], // 2KB RAM
+    memory: mem::RAM,
 }
 
 impl CPU {
     fn new() -> CPU {
         CPU {
             regs: Registers::new(),
-            memory: [0; 0x800]
+            memory: mem::RAM::new(),
         }
     }
 
@@ -51,18 +52,18 @@ impl CPU {
     fn load_rom(&mut self, filename: &str) {
         // Load ROM and copy its code into the CPU
         let r = rom::ROM::from_file(filename);
-        self.memory[0..0x100].clone_from_slice(&r.code[..]);
+        self.memory.data[0..0x100].clone_from_slice(&r.code[..]);
     }
 
     fn emulate_cycle(&mut self) {
         // Fetch opcode
-        let opcode = self.memory[self.regs.PC as usize];
+        let opcode = self.memory.loadb(self.regs.PC);
         self.regs.PC += 1; // Obviously this wont work with variable length opcodes.
         println!("Got opcode {:x}", opcode);
         // Process opcode
         match opcode {
             ADC_I => {
-                let i = self.memory[self.regs.PC as usize];
+                let i = self.memory.loadb(self.regs.PC);
                 self.regs.PC += 1;
                 self.regs.A += i;
             },
@@ -82,10 +83,7 @@ impl fmt::Display for CPU {
 }
 
 fn main() {
-    let mut cpu: CPU = CPU {
-        regs: Registers::new(),
-        memory: [0; 0x800]
-    };
+    let mut cpu: CPU = CPU::new();
     cpu.init();
     cpu.load_rom("test");
 
