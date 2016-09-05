@@ -1,3 +1,7 @@
+pub mod rom;
+use std::fmt;
+
+#[derive(Debug)]
 struct Registers {
     A: u8,
     X: u8,
@@ -25,16 +29,55 @@ const S2_FLAG: u8 = 1 << 5;
 const OVERFLOW_FLAG: u8 = 1 << 6;
 const NEG_FLAG: u8 = 1 << 7;
 
+// Opcodes
+const ADC_I: u8 = 0x69; // Add immediate
+
 struct CPU {
     regs: Registers,
     memory: [u8; 0x800], // 2KB RAM
 }
 
 impl CPU {
-    fn Initialize(&mut self) {
+    fn new() -> CPU {
+        CPU {
+            regs: Registers::new(),
+            memory: [0; 0x800]
+        }
     }
 
-    fn LoadROM(&mut self, filename: &str) {
+    fn init(&mut self) {
+    }
+
+    fn load_rom(&mut self, filename: &str) {
+        // Load ROM and copy its code into the CPU
+        let r = rom::ROM::from_file(filename);
+        self.memory[0..0x100].clone_from_slice(&r.code[..]);
+    }
+
+    fn emulate_cycle(&mut self) {
+        // Fetch opcode
+        let opcode = self.memory[self.regs.PC as usize];
+        self.regs.PC += 1; // Obviously this wont work with variable length opcodes.
+        println!("Got opcode {:x}", opcode);
+        // Process opcode
+        match opcode {
+            ADC_I => {
+                let i = self.memory[self.regs.PC as usize];
+                self.regs.PC += 1;
+                self.regs.A += i;
+            },
+            _ => {
+                println!("Illegal opcode {:x}", opcode);
+            }
+        }
+
+        // Increment PC
+    }
+}
+
+impl fmt::Display for CPU {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.regs)
     }
 }
 
@@ -43,10 +86,15 @@ fn main() {
         regs: Registers::new(),
         memory: [0; 0x800]
     };
-    cpu.Initialize();
-    cpu.LoadROM("filename");
+    cpu.init();
+    cpu.load_rom("test");
 
-    loop {
+    println!("Initializing CPU with state:");
+    println!("{}", cpu);
 
-    }
+    println!("Starting CPU");
+    //loop {
+        cpu.emulate_cycle();
+        println!("{:?}", cpu.regs);
+    //}
 }
