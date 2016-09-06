@@ -79,3 +79,18 @@ impl fmt::Display for CPU {
         write!(f, "{:?}", self.regs)
     }
 }
+
+impl fmt::Debug for CPU {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut memdump = String::new();
+        let mut addr = 0;
+        for byte in self.memory.data.into_iter() {
+            if addr % 32 == 0 {
+                memdump.push_str(&format!("\n{:04x}: ", addr));
+            }
+            memdump.push_str(&format!("{:02x} ", byte));
+            addr += 1;
+        }
+        write!(f, "{}\n{:?}", memdump, self.regs)
+    }
+}
