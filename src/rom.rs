@@ -1,5 +1,6 @@
 use std;
 use std::io::prelude::*;
+use std::io::SeekFrom;
 use std::fs::File;
 
 const INES_HEADER_MAGIC: u32 = 0x1A53454E; // ELF\x1A
@@ -18,8 +19,19 @@ impl ROM {
         f.read_exact(&mut header).unwrap();
 
         let header = iNESHeader::from_array(&header);
-        let prg = vec![0; header.size_prg as usize * 16384];
-        let chr = vec![0; header.size_chr as usize * 8192];
+        let mut prg = vec![0; header.size_prg as usize * 16384];
+        let mut chr = vec![0; header.size_chr as usize * 8192];
+
+        // We want to ignore the trainer, but if it's there we must seek past it.
+        if header.has_trainer() { f.seek(SeekFrom::Current(512)).unwrap(); }
+
+        // Read in PRG
+        let mut len = prg.len();
+        f.read_exact(&mut prg[0..len]).unwrap();
+
+        // Read in CHR
+        len = chr.len();
+        f.read_exact(&mut chr[0..len]).unwrap();
 
         println!("Got magic {:x}", header.magic);
         return ROM {
@@ -58,5 +70,9 @@ impl iNESHeader {
         assert!(header.magic == INES_HEADER_MAGIC);
 
         return header
+    }
+
+    fn has_trainer(&self) -> bool {
+        self.flags_6 & (1 << 2) != 0
     }
 }
