@@ -50,7 +50,8 @@ impl CPU {
     pub fn load_rom(&mut self, filename: &str) {
         // Load ROM and copy its code into the CPU
         let r = rom::ROM::from_file(filename);
-        self.memory.data[0..0x100].clone_from_slice(&r.code[..]);
+        // This is bullshit for now, I just want to see some instruction copied in
+        self.memory.data[0..0x100].clone_from_slice(&r.prg[0..0x100]);
     }
 
     pub fn emulate_cycle(&mut self) {
