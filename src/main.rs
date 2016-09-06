@@ -12,8 +12,8 @@ fn main() {
     println!("{:?}", cpu);
 
     println!("Starting CPU");
-    //loop {
+    loop {
         cpu.emulate_cycle();
         println!("{}", cpu);
-    //}
+    }
 }

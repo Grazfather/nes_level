@@ -66,7 +66,7 @@ impl CPU {
                 self.regs.A += i;
             },
             _ => {
-                println!("Illegal opcode {:x}", opcode);
+                panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
         }
 
