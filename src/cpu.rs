@@ -1,23 +1,23 @@
 use mem;
 use rom;
 
+use std;
 use std::fmt;
 
 #[derive(Debug)]
 struct Registers {
-    A: u8,
-    X: u8,
-    Y: u8,
-    S: u8, // Stack pointer
-    P: u8, // Status register
-    PC: u16,
+    a: u8,
+    x: u8,
+    y: u8,
+    s: u8, // Stack pointer
+    flags: u8, // Status register
+    pc: u16,
 }
 
 impl Registers {
     fn new() -> Registers {
-        Registers {
-             A: 0, X: 0, Y: 0, S: 0, P: 0, PC: 0
-        }
+        let r: Registers = unsafe{ std::mem::zeroed() };
+        return r
     }
 }
 
@@ -55,22 +55,20 @@ impl CPU {
 
     pub fn emulate_cycle(&mut self) {
         // Fetch opcode
-        let opcode = self.memory.loadb(self.regs.PC);
-        self.regs.PC += 1; // Obviously this wont work with variable length opcodes.
+        let opcode = self.memory.loadb(self.regs.pc);
+        self.regs.pc += 1; // Obviously this wont work with variable length opcodes.
         println!("Got opcode {:x}", opcode);
         // Process opcode
         match opcode {
             ADC_I => {
-                let i = self.memory.loadb(self.regs.PC);
-                self.regs.PC += 1;
-                self.regs.A += i;
+                let i = self.memory.loadb(self.regs.pc);
+                self.regs.pc += 1;
+                self.regs.a += i;
             },
             _ => {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
         }
-
-        // Increment PC
     }
 }
 
