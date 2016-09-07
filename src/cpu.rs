@@ -21,7 +21,7 @@ impl Registers {
     }
 }
 
-// Bits for Registers::S
+// Bits for Registers::flags
 const CARRY_FLAG: u8 = 1 << 0;
 const ZERO_FLAG: u8 = 1 << 1;
 const INT_FLAG: u8 = 1 << 2;
@@ -36,22 +36,16 @@ const ADC_I: u8 = 0x69; // Add immediate
 
 pub struct CPU {
     regs: Registers,
-    memory: mem::RAM,
+    memory: mem::Memory,
 }
 
 impl CPU {
-    pub fn new() -> CPU {
+    pub fn new(rom_file: &str) -> CPU {
+        let rom = rom::ROM::from_file(rom_file);
         CPU {
             regs: Registers::new(),
-            memory: mem::RAM::new(),
+            memory: mem::Memory::from_rom(rom),
         }
-    }
-
-    pub fn load_rom(&mut self, filename: &str) {
-        // Load ROM and copy its code into the CPU
-        let r = rom::ROM::from_file(filename);
-        // This is bullshit for now, I just want to see some instruction copied in
-        self.memory.data[0..0x100].clone_from_slice(&r.prg[0..0x100]);
     }
 
     pub fn emulate_cycle(&mut self) {
@@ -83,7 +77,7 @@ impl fmt::Debug for CPU {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut memdump = String::new();
         let mut addr = 0;
-        for byte in self.memory.data.into_iter() {
+        for byte in self.memory.ram.data.into_iter() {
             if addr % 32 == 0 {
                 memdump.push_str(&format!("\n{:04x}: ", addr));
             }

@@ -19,6 +19,7 @@ impl ROM {
         f.read_exact(&mut header).unwrap();
 
         let header = iNESHeader::from_array(&header);
+        println!("Got magic {:x}", header.magic);
         let mut prg = vec![0; header.size_prg as usize * 16384];
         let mut chr = vec![0; header.size_chr as usize * 8192];
 
@@ -33,12 +34,15 @@ impl ROM {
         len = chr.len();
         f.read_exact(&mut chr[0..len]).unwrap();
 
-        println!("Got magic {:x}", header.magic);
         return ROM {
             header: header,
             prg: prg,
             chr: chr,
         }
+    }
+    pub fn loadb(&mut self, addr: u16) -> u8 {
+        // For now just assume 0x4020 maps to PRG[0]
+        self.prg[addr as usize]
     }
 }
 

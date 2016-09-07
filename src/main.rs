@@ -5,9 +5,7 @@ mod rom;
 
 
 fn main() {
-    let mut cpu: cpu::CPU = cpu::CPU::new();
-
-    cpu.load_rom("test.nes");
+    let mut cpu: cpu::CPU = cpu::CPU::new("test.nes");
 
     println!("Initializing CPU with state:");
     println!("{:?}", cpu);
