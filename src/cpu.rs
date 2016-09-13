@@ -48,22 +48,48 @@ impl CPU {
         }
     }
 
+    // Facade that calls the memory directly
+    pub fn loadb(&self, addr: u16) -> u8 {
+        self.memory.loadb(addr)
+    }
+
+    fn get_flag(&self, flag: u8) -> bool {
+        (self.regs.flags & flag == 1)
+    }
+
+    fn set_flag(&mut self, flag: u8, value: bool) {
+        if value {
+            self.regs.flags |= flag;
+        } else {
+            self.regs.flags &= !flag;
+        }
+    }
+
     pub fn emulate_cycle(&mut self) {
         // Fetch opcode
-        let opcode = self.memory.loadb(self.regs.pc);
-        self.regs.pc += 1; // Obviously this wont work with variable length opcodes.
+        let opcode = self.loadb(self.regs.pc);
         println!("Got opcode {:x}", opcode);
         // Process opcode
         match opcode {
-            ADC_I => {
-                let i = self.memory.loadb(self.regs.pc);
-                self.regs.pc += 1;
-                self.regs.a += i;
-            },
+            ADC_I => { self.adc_i(); },
             _ => {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
         }
+    }
+}
+
+// Instructions implementation
+impl CPU {
+    fn adc_i(&mut self) {
+        let mut result = self.regs.a as u16;
+        let i = self.loadb(self.regs.pc);
+        result += i as u16;
+        if self.get_flag(CARRY_FLAG) { result += 1; }
+
+        self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
+
+        self.regs.a = result as u8;
     }
 }
 
