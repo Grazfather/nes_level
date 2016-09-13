@@ -34,6 +34,11 @@ const NEG_FLAG: u8 = 1 << 7;
 // Opcodes
 const ADC_I: u8 = 0x69; // Add immediate
 
+// Vectors
+const NMI_VECTOR: u16 = 0xFFFA;
+const RESET_VECTOR: u16 = 0xFFFC;
+const IRQ_VECTOR: u16 = 0xFFFE;
+
 pub struct CPU {
     regs: Registers,
     memory: mem::Memory,
@@ -51,6 +56,10 @@ impl CPU {
     // Facade that calls the memory directly
     pub fn loadb(&self, addr: u16) -> u8 {
         self.memory.loadb(addr)
+    }
+
+    pub fn loadw(&self, addr: u16) -> u16 {
+        self.memory.loadw(addr)
     }
 
     fn get_flag(&self, flag: u8) -> bool {
@@ -76,6 +85,11 @@ impl CPU {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
         }
+    }
+
+    pub fn reset(&mut self) {
+        // Reset registers
+        self.regs.pc = self.loadw(RESET_VECTOR);
     }
 }
 

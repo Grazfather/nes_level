@@ -33,12 +33,13 @@ impl Memory {
             rom: rom,
         }
     }
+
     pub fn loadb(&self, addr: u16) -> u8 {
         // First 0x2000 bytes are 0x800 mirrored 4 times
         if addr < 0x2000 {
             self.ram.loadb(addr & 0x7ff)
         }
-        // Next 0x2000 are 8 bytes mirror a ton
+        // Next 0x2000 are 8 bytes mirrored a ton
         else if addr >= 0x2000 && addr < 0x4000 {
             //self.ppu.loadb((addr & 0x7) + 0x2000)
             0u8
@@ -52,5 +53,35 @@ impl Memory {
         else {
             self.rom.loadb(addr)
         }
+    }
+
+    pub fn storeb(&mut self, addr: u16, val: u8) {
+        // First 0x2000 bytes are 0x800 mirrored 4 times
+        if addr < 0x2000 {
+            self.ram.storeb(addr & 0x7ff, val);
+        }
+        // Next 0x2000 are 8 bytes mirrored a ton
+        else if addr >= 0x2000 && addr < 0x4000 {
+            //self.ppu.storeb((addr & 0x7) + 0x2000, val);
+        }
+        // Next 0x20 are APU
+        else if addr >= 0x4000 && addr < 0x4020 {
+            //self.apu.storeb(addr, val);
+        }
+        // The rest is mapped to the cartridge
+        // TODO: Will the ROM panic if the writes are to ROM?
+        else {
+            //self.rom.storeb(addr, val);
+        }
+
+    }
+
+    pub fn loadw(&self, addr: u16) -> u16 {
+        self.loadb(addr) as u16 | (self.loadb(addr + 1) as u16) << 8
+    }
+
+    pub fn storew(&mut self, addr: u16, val: u16) {
+        self.storeb(addr, (val & 0xFF) as u8);
+        self.storeb(addr + 1, ((val >> 8) & 0xFF) as u8);
     }
 }
