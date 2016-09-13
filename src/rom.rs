@@ -40,7 +40,7 @@ impl ROM {
             chr: chr,
         }
     }
-    pub fn loadb(&mut self, addr: u16) -> u8 {
+    pub fn loadb(&self, addr: u16) -> u8 {
         // For now just assume 0x4020 maps to PRG[0]
         self.prg[addr as usize]
     }

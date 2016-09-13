@@ -6,9 +6,9 @@ pub struct RAM {
 
 impl RAM {
     pub fn new() -> RAM { RAM {data: [0; 0x800]} }
-    pub fn loadb(&mut self, addr: u16) -> u8 { self.data[addr as usize] }
+    pub fn loadb(&self, addr: u16) -> u8 { self.data[addr as usize] }
     pub fn storeb(&mut self, addr: u16, val: u8) { self.data[addr as usize] = val; }
-    pub fn loadw(&mut self, addr: u16) -> u16 {
+    pub fn loadw(&self, addr: u16) -> u16 {
         self.loadb(addr) as u16 | (self.loadb(addr + 1) as u16) << 8
     }
     pub fn storew(&mut self, addr: u16, val: u16) {
@@ -33,7 +33,7 @@ impl Memory {
             rom: rom,
         }
     }
-    pub fn loadb(&mut self, addr: u16) -> u8 {
+    pub fn loadb(&self, addr: u16) -> u8 {
         // First 0x2000 bytes are 0x800 mirrored 4 times
         if addr < 0x2000 {
             self.ram.loadb(addr & 0x7ff)
