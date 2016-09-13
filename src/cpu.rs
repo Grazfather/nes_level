@@ -1,4 +1,5 @@
 use mem;
+use mem::Addressable;
 use rom;
 
 use std;

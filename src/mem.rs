@@ -1,13 +1,24 @@
 use rom;
 
+pub trait Addressable {
+    fn loadb(&self, addr: u16) -> u8;
+    fn storeb(&mut self, addr: u16, val: u8);
+
+    fn loadw(&self, addr: u16) -> u16 {
+        self.loadb(addr) as u16 | (self.loadb(addr + 1) as u16) << 8
+    }
+
+    fn storew(&mut self, addr: u16, val: u16) {
+        self.storeb(addr, (val & 0xFF) as u8);
+        self.storeb(addr + 1, ((val >> 8) & 0xFF) as u8);
+    }
+}
 pub struct RAM {
     pub data: [u8; 0x800],
 }
 
 impl RAM {
     pub fn new() -> RAM { RAM {data: [0; 0x800]} }
-    pub fn loadb(&self, addr: u16) -> u8 { self.data[addr as usize] }
-    pub fn storeb(&mut self, addr: u16, val: u8) { self.data[addr as usize] = val; }
     pub fn loadw(&self, addr: u16) -> u16 {
         self.loadb(addr) as u16 | (self.loadb(addr + 1) as u16) << 8
     }
@@ -15,6 +26,11 @@ impl RAM {
         self.storeb(addr, (val & 0xFF) as u8);
         self.storeb(addr + 1, ((val >> 8) & 0xFF) as u8);
     }
+}
+
+impl Addressable for RAM {
+    fn loadb(&self, addr: u16) -> u8 { self.data[addr as usize] }
+    fn storeb(&mut self, addr: u16, val: u8) { self.data[addr as usize] = val; }
 }
 
 pub struct Memory {
@@ -33,8 +49,10 @@ impl Memory {
             rom: rom,
         }
     }
+}
 
-    pub fn loadb(&self, addr: u16) -> u8 {
+impl Addressable for Memory {
+    fn loadb(&self, addr: u16) -> u8 {
         // First 0x2000 bytes are 0x800 mirrored 4 times
         if addr < 0x2000 {
             self.ram.loadb(addr & 0x7ff)
@@ -55,7 +73,7 @@ impl Memory {
         }
     }
 
-    pub fn storeb(&mut self, addr: u16, val: u8) {
+    fn storeb(&mut self, addr: u16, val: u8) {
         // First 0x2000 bytes are 0x800 mirrored 4 times
         if addr < 0x2000 {
             self.ram.storeb(addr & 0x7ff, val);
@@ -74,14 +92,5 @@ impl Memory {
             //self.rom.storeb(addr, val);
         }
 
-    }
-
-    pub fn loadw(&self, addr: u16) -> u16 {
-        self.loadb(addr) as u16 | (self.loadb(addr + 1) as u16) << 8
-    }
-
-    pub fn storew(&mut self, addr: u16, val: u16) {
-        self.storeb(addr, (val & 0xFF) as u8);
-        self.storeb(addr + 1, ((val >> 8) & 0xFF) as u8);
     }
 }

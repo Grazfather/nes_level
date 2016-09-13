@@ -1,3 +1,5 @@
+use mem;
+
 use std;
 use std::io::prelude::*;
 use std::io::SeekFrom;
@@ -12,7 +14,6 @@ pub struct ROM {
 }
 
 impl ROM {
-
     pub fn from_file(filename: &str) -> ROM {
         let mut f = File::open(filename).unwrap();
         let mut header: [u8; 16] = [0; 16];
@@ -40,9 +41,15 @@ impl ROM {
             chr: chr,
         }
     }
-    pub fn loadb(&self, addr: u16) -> u8 {
+}
+
+impl mem::Addressable for ROM {
+    fn loadb(&self, addr: u16) -> u8 {
         // For now just assume 0x4020 maps to PRG[0]
         self.prg[addr as usize]
+    }
+    fn storeb(&mut self, addr: u16, val: u8) {
+        panic!("You cannot write to PRG");
     }
 }
 
