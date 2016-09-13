@@ -53,6 +53,7 @@ impl mem::Addressable for ROM {
     }
 }
 
+#[derive(Default)]
 pub struct iNESHeader {
     magic: u32,
     size_prg: u8,
@@ -67,12 +68,12 @@ pub struct iNESHeader {
 
 impl iNESHeader {
     fn new() -> iNESHeader {
-        let header: iNESHeader = unsafe { std::mem::zeroed() };
+        let header: iNESHeader = Default::default();
         return header
     }
 
     fn from_array(a: &[u8; 16]) -> iNESHeader {
-        let mut header: iNESHeader = unsafe { std::mem::zeroed() };
+        let mut header: iNESHeader = Default::default();
 
         // Create a mutable slice view
         let as_slice: &mut [u8; 16] = unsafe { std::mem::transmute(&mut header) };

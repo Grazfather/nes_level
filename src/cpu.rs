@@ -2,10 +2,10 @@ use mem;
 use mem::Addressable;
 use rom;
 
-use std;
 use std::fmt;
 
 #[derive(Debug)]
+#[derive(Default)]
 struct Registers {
     a: u8,
     x: u8,
@@ -17,7 +17,7 @@ struct Registers {
 
 impl Registers {
     fn new() -> Registers {
-        let r: Registers = unsafe{ std::mem::zeroed() };
+        let r: Registers = Default::default();
         return r
     }
 }
