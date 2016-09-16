@@ -17,11 +17,11 @@ fn main() {
     let mut cpu: cpu::CPU = cpu::CPU::new(&filename);
 
     println!("Initializing CPU with state:");
-    println!("{:?}", cpu);
+    println!("{:64?}", cpu);
 
     println!("Starting CPU");
     loop {
         cpu.emulate_cycle();
-        println!("{}", cpu);
+        println!("{:64?}", cpu);
     }
 }

@@ -48,6 +48,7 @@ impl mem::Addressable for ROM {
         // For now just assume 0x4020 maps to PRG[0]
         self.prg[addr as usize]
     }
+    #[allow(unused_variables)]
     fn storeb(&mut self, addr: u16, val: u8) {
         panic!("You cannot write to PRG");
     }

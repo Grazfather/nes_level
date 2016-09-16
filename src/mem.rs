@@ -37,7 +37,7 @@ pub struct Memory {
     pub ram: RAM,
     // ppu: PPU,
     // apu: APU,
-    rom: rom::ROM,
+    pub rom: rom::ROM,
 }
 
 impl Memory {

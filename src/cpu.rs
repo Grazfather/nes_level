@@ -118,7 +118,12 @@ impl fmt::Debug for CPU {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut memdump = String::new();
         let mut addr = 0;
-        for byte in self.memory.ram.data.into_iter() {
+        let len = match f.width() {
+            Some(x) => { x },
+            None => { self.memory.rom.prg.len() },
+        };
+
+        for byte in self.memory.rom.prg[0..len].iter() {
             if addr % 32 == 0 {
                 memdump.push_str(&format!("\n{:04x}: ", addr));
             }
