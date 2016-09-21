@@ -17,7 +17,7 @@ struct Registers {
 
 impl Registers {
     fn new() -> Registers {
-        let r: Registers = Default::default();
+        let r: Registers = Registers::default();
         return r
     }
 }

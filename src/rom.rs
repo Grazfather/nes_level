@@ -69,12 +69,12 @@ pub struct iNESHeader {
 
 impl iNESHeader {
     fn new() -> iNESHeader {
-        let header: iNESHeader = Default::default();
+        let header: iNESHeader = iNESHeader::default();
         return header
     }
 
     fn from_array(a: &[u8; 16]) -> iNESHeader {
-        let mut header: iNESHeader = Default::default();
+        let mut header: iNESHeader = iNESHeader::default();
 
         // Create a mutable slice view
         let as_slice: &mut [u8; 16] = unsafe { std::mem::transmute(&mut header) };
