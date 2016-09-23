@@ -15,9 +15,10 @@ fn main() {
     };
 
     let mut cpu: cpu::CPU = cpu::CPU::new(&filename);
+    cpu.reset();
 
     println!("Initializing CPU with state:");
-    println!("{:64?}", cpu);
+    println!("{:256?}", cpu);
 
     println!("Starting CPU");
     loop {

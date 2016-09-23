@@ -132,7 +132,7 @@ impl fmt::Debug for CPU {
 
         for byte in self.memory.rom.prg[0..len].iter() {
             if addr % 32 == 0 {
-                memdump.push_str(&format!("\n{:04x}: ", addr));
+                memdump.push_str(&format!("\n{:04x}: ", addr + 0x8000));
             }
             memdump.push_str(&format!("{:02x} ", byte));
             addr += 1;

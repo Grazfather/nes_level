@@ -67,6 +67,14 @@ impl Addressable for Memory {
             //self.apu.loadb(addr)
             0u8
         }
+        // 0x4020 - 0x6000 are Expansion ROM
+        else if addr >= 0x4020 && addr < 0x6000 {
+            0u8
+        }
+        // 0x6000 - 0x8000 are Cartridge SRAM
+        else if addr >= 0x6000 && addr < 0x8000 {
+            0u8
+        }
         // The rest is mapped to the cartridge
         else {
             self.rom.loadb(addr)
@@ -86,7 +94,17 @@ impl Addressable for Memory {
         else if addr >= 0x4000 && addr < 0x4020 {
             //self.apu.storeb(addr, val);
         }
+        // 0x4020 - 0x6000 are Expansion ROM
+        else if addr >= 0x4020 && addr < 0x6000 {
+        }
+        // 0x6000 - 0x8000 are Cartridge SRAM
+        else if addr >= 0x6000 && addr < 0x8000 {
+        }
         // The rest is mapped to the cartridge
+        // If the size_prg is 1, then it's mirrored twice
+        // * 0x8000 to 0xC000
+        // * 0xC000 to 0x10000
+        // If the size_prg is more than 2, then the cartridge must have a mapper
         // TODO: Will the ROM panic if the writes are to ROM?
         else {
             //self.rom.storeb(addr, val);

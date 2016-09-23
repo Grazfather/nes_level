@@ -44,9 +44,12 @@ impl ROM {
 }
 
 impl mem::Addressable for ROM {
-    fn loadb(&self, addr: u16) -> u8 {
-        // For now just assume 0x4020 maps to PRG[0]
-        self.prg[addr as usize]
+    fn loadb(&self, mut addr: u16) -> u8 {
+        // TODO: Implement mapper and mirroring
+        if self.header.size_prg == 1 && addr >= 0xC000 {
+            addr -= 0x4000;
+        }
+        self.prg[(addr as usize) - 0x8000]
     }
     #[allow(unused_variables)]
     fn storeb(&mut self, addr: u16, val: u8) {
