@@ -4,7 +4,6 @@ use rom;
 
 use std::fmt;
 
-#[derive(Debug)]
 #[derive(Default)]
 struct Registers {
     a: u8,
@@ -19,6 +18,13 @@ impl Registers {
     fn new() -> Registers {
         let r: Registers = Registers::default();
         return r
+    }
+}
+
+impl fmt::Debug for Registers {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Registers a: 0x{:02x}, x: 0x{:02x}, y: 0x{:02x}, s: 0x{:02x}, flags: 0x{:02x}, pc: 0x{:04x}",
+            self.a, self.x, self.y, self.s, self.flags, self.pc)
     }
 }
 
@@ -108,6 +114,7 @@ impl CPU {
     }
 }
 
+// Formatting
 impl fmt::Display for CPU {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.regs)
