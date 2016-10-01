@@ -19,6 +19,7 @@ fn main() {
 
     println!("Initializing CPU with state:");
     println!("{:256?}", cpu);
+    cpu.print_memory(0, 256);
 
     println!("Starting CPU");
     loop {

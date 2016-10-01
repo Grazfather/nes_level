@@ -115,6 +115,16 @@ impl CPU {
 }
 
 // Formatting
+impl CPU {
+    pub fn print_memory(&self, start: u16, end: u16) {
+        if end == 0 {
+            print!("{}", hexdump(&self.memory.ram.data[..], 0x0));
+        } else {
+            print!("{}", hexdump(&self.memory.ram.data[start as usize..end as usize], 0x0));
+        }
+    }
+}
+
 impl fmt::Display for CPU {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.regs)
@@ -124,19 +134,30 @@ impl fmt::Display for CPU {
 impl fmt::Debug for CPU {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut memdump = String::new();
-        let mut addr = 0;
+        // This is stupid. Why is the width the ROM length? Write a proper dumping method
         let len = match f.width() {
             Some(x) => { x },
             None => { self.memory.rom.prg.len() },
         };
 
-        for byte in self.memory.rom.prg[0..len].iter() {
-            if addr % 32 == 0 {
-                memdump.push_str(&format!("\n{:04x}: ", addr + 0x8000));
-            }
-            memdump.push_str(&format!("{:02x} ", byte));
-            addr += 1;
-        }
-        write!(f, "{}\n{:?}", memdump, self.regs)
+        memdump.push_str(&hexdump(&self.memory.rom.prg[0..len], 0x8000));
+        try!(write!(f, "{}", memdump));
+        try!(write!(f, "{:?}", self.regs));
+        Result::Ok(())
     }
+}
+
+fn hexdump(hex: &[u8], start: u32) -> String {
+    let mut addr = start;
+    let mut dump = String::new();
+    for byte in hex.iter() {
+        if addr % 32 == 0 {
+            dump.push_str(&format!("\n{:04x}: ", addr));
+        }
+        dump.push_str(&format!("{:02x} ", byte));
+        addr += 1;
+    }
+    dump.push_str(&"\n");
+
+    return dump;
 }

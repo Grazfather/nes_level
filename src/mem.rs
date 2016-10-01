@@ -53,7 +53,7 @@ impl Memory {
 
 impl Addressable for Memory {
     fn loadb(&self, addr: u16) -> u8 {
-        // First 0x2000 bytes are 0x800 mirrored 4 times
+        // First 0x2000 bytes are 0x800 bytes of RAM mirrored 4 times
         if addr < 0x2000 {
             self.ram.loadb(addr & 0x7ff)
         }
@@ -82,7 +82,7 @@ impl Addressable for Memory {
     }
 
     fn storeb(&mut self, addr: u16, val: u8) {
-        // First 0x2000 bytes are 0x800 mirrored 4 times
+        // First 0x2000 bytes are 0x800 bytes of RAM mirrored 4 times
         if addr < 0x2000 {
             self.ram.storeb(addr & 0x7ff, val);
         }
