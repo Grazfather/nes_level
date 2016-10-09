@@ -40,6 +40,11 @@ const NEG_FLAG: u8 = 1 << 7;
 
 // Opcodes
 const ADC_I: u8 = 0x69; // Add immediate
+const LDA_I: u8 = 0xa9; // Load A immediate
+const LDA_AX: u8 = 0xbd; // Load A absolute,X
+const LDX_I: u8 = 0xa2; // Load X immediate
+const STA_A: u8 = 0x8d; // Store A absolute
+const CMP_I: u8 = 0xc9; // Compare immediate
 
 // Vectors
 const NMI_VECTOR: u16 = 0xFFFA;
@@ -60,13 +65,18 @@ impl CPU {
         }
     }
 
-    // Facade that calls the memory directly
-    pub fn loadb(&self, addr: u16) -> u8 {
-        self.memory.loadb(addr)
+    // Read a byte at the PC and increment it
+    fn loadb_move(&mut self) -> u8 {
+        let v = self.memory.loadb(self.regs.pc);
+        self.regs.pc += 1;
+        return v;
     }
 
-    pub fn loadw(&self, addr: u16) -> u16 {
-        self.memory.loadw(addr)
+    // Read a word at the PC and increment it by 2
+    fn loadw_move(&mut self) -> u16 {
+        let v = self.memory.loadw(self.regs.pc);
+        self.regs.pc += 2;
+        return v;
     }
 
     fn get_flag(&self, flag: u8) -> bool {
@@ -83,11 +93,16 @@ impl CPU {
 
     pub fn emulate_cycle(&mut self) {
         // Fetch opcode
-        let opcode = self.loadb(self.regs.pc);
+        let opcode = self.loadb_move();
         println!("Got opcode {:x}", opcode);
         // Process opcode
         match opcode {
             ADC_I => { self.adc_i(); },
+            LDA_I => { self.lda_i(); },
+            LDA_AX => { self.lda_ax(); },
+            LDX_I => { self.ldx_i(); },
+            STA_A => { self.sta_a(); },
+            CMP_I => { self.cmp_i(); },
             _ => {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
@@ -96,21 +111,50 @@ impl CPU {
 
     pub fn reset(&mut self) {
         // Reset registers
-        self.regs.pc = self.loadw(RESET_VECTOR);
+        self.regs.pc = self.memory.loadw(RESET_VECTOR);
     }
 }
 
 // Instructions implementation
 impl CPU {
-    fn adc_i(&mut self) {
+    fn adc_i(&mut self) { // 0x69
         let mut result = self.regs.a as u16;
-        let i = self.loadb(self.regs.pc);
+        let i = self.loadb_move();
         result += i as u16;
         if self.get_flag(CARRY_FLAG) { result += 1; }
 
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
 
         self.regs.a = result as u8;
+    }
+
+    fn lda_i(&mut self) { // 0xa9
+        let v = self.loadb_move();
+        self.regs.a = v;
+    }
+
+    fn lda_ax(&mut self) { // 0xbd
+        let addr = self.loadw_move();
+        let v = self.memory.loadb(addr + self.regs.x as u16);
+        self.regs.a = v;
+    }
+
+    fn ldx_i(&mut self) { // 0xa2
+        let v = self.loadb_move();
+        self.regs.x = v;
+    }
+
+    fn sta_a(&mut self) { // 0x8d
+        let addr = self.loadw_move();
+        self.memory.storeb(addr, self.regs.a);
+    }
+
+    fn cmp_i(&mut self) { // 0xc9
+        let v = self.loadb_move();
+        println!("Comparing {} and {}", self.regs.a, v);
+        let mut result = self.regs.a as u16 - v as u16;
+        self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
+        self.set_flag(ZERO_FLAG, result == 0);
     }
 }
 

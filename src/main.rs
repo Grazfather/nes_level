@@ -24,6 +24,5 @@ fn main() {
     println!("Starting CPU");
     loop {
         cpu.emulate_cycle();
-        println!("{:64?}", cpu);
     }
 }
