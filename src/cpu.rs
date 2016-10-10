@@ -40,11 +40,14 @@ const NEG_FLAG: u8 = 1 << 7;
 
 // Opcodes
 const ORA_I: u8 = 0x09; // Or A immediate
+const ORA_A: u8 = 0x0d; // Or A absolute
 const AND_I: u8 = 0x29; // And A immediate
+const AND_A: u8 = 0x2d; // And A absolute
 const ADC_I: u8 = 0x69; // Add immediate
 const LDA_I: u8 = 0xa9; // Load A immediate
 const LDA_AX: u8 = 0xbd; // Load A absolute,X
 const LDX_I: u8 = 0xa2; // Load X immediate
+const LDX_A: u8 = 0xae; // Load X absolute
 const STA_A: u8 = 0x8d; // Store A absolute
 const CMP_I: u8 = 0xc9; // Compare immediate
 
@@ -60,12 +63,26 @@ pub struct CPU {
 
 trait AddressingMode {
     fn load(cpu: &mut CPU) -> u8;
+    fn store(cpu: &mut CPU, val: u8);
 }
 
 struct ImmediateAddressingMode;
 impl AddressingMode for ImmediateAddressingMode {
     fn load(cpu: &mut CPU) -> u8 {
         cpu.loadb_move()
+    }
+    fn store(_cpu: &mut CPU, _val: u8) { panic!("Can't store to an immediate"); }
+}
+
+struct AbsoluteAddressingMode;
+impl AddressingMode for AbsoluteAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let addr = cpu.loadw_move();
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let addr = cpu.loadw_move();
+        cpu.memory.storeb(addr, val);
     }
 }
 
@@ -80,16 +97,16 @@ impl CPU {
 
     // Read a byte at the PC and increment it
     fn loadb_move(&mut self) -> u8 {
-        let v = self.memory.loadb(self.regs.pc);
+        let val = self.memory.loadb(self.regs.pc);
         self.regs.pc += 1;
-        return v;
+        return val;
     }
 
     // Read a word at the PC and increment it by 2
     fn loadw_move(&mut self) -> u16 {
-        let v = self.memory.loadw(self.regs.pc);
+        let val = self.memory.loadw(self.regs.pc);
         self.regs.pc += 2;
-        return v;
+        return val;
     }
 
     fn get_flag(&self, flag: u8) -> bool {
@@ -111,12 +128,15 @@ impl CPU {
         // Process opcode
         match opcode {
             ORA_I => { self.ora::<ImmediateAddressingMode>(); },
+            ORA_A => { self.ora::<AbsoluteAddressingMode>(); },
             AND_I => { self.and::<ImmediateAddressingMode>(); },
+            AND_A => { self.and::<AbsoluteAddressingMode>(); },
             ADC_I => { self.adc::<ImmediateAddressingMode>(); },
-            LDA_I => { self.lda_i(); },
+            LDA_I => { self.lda::<ImmediateAddressingMode>(); },
             LDA_AX => { self.lda_ax(); },
-            LDX_I => { self.ldx_i(); },
-            STA_A => { self.sta_a(); },
+            LDX_I => { self.ldx::<ImmediateAddressingMode>(); },
+            LDX_A => { self.ldx::<AbsoluteAddressingMode>(); },
+            STA_A => { self.sta::<AbsoluteAddressingMode>(); },
             CMP_I => { self.cmp::<ImmediateAddressingMode>(); },
             _ => {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
@@ -133,19 +153,19 @@ impl CPU {
 // Instructions implementation
 impl CPU {
     fn ora<AM: AddressingMode>(&mut self) {
-        let v = AM::load(self);
-        self.regs.a |= v;
+        let val = AM::load(self);
+        self.regs.a |= val;
     }
 
     fn and<AM: AddressingMode>(&mut self) {
-        let v = AM::load(self);
-        self.regs.a &= v;
+        let val = AM::load(self);
+        self.regs.a &= val;
     }
 
     fn adc<AM: AddressingMode>(&mut self) {
         let mut result = self.regs.a as u16;
-        let v = AM::load(self);
-        result += v as u16;
+        let val = AM::load(self);
+        result += val as u16;
         if self.get_flag(CARRY_FLAG) { result += 1; }
 
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
@@ -153,31 +173,31 @@ impl CPU {
         self.regs.a = result as u8;
     }
 
-    fn lda_i(&mut self) { // 0xa9
-        let v = self.loadb_move();
-        self.regs.a = v;
+    fn lda<AM: AddressingMode>(&mut self) {
+        let val = AM::load(self);
+        self.regs.a = val;
     }
 
     fn lda_ax(&mut self) { // 0xbd
         let addr = self.loadw_move();
-        let v = self.memory.loadb(addr + self.regs.x as u16);
-        self.regs.a = v;
+        let val = self.memory.loadb(addr + self.regs.x as u16);
+        self.regs.a = val;
     }
 
-    fn ldx_i(&mut self) { // 0xa2
-        let v = self.loadb_move();
-        self.regs.x = v;
+    fn ldx<AM: AddressingMode>(&mut self) { // 0xa2
+        let val = AM::load(self);
+        self.regs.x = val;
     }
 
-    fn sta_a(&mut self) { // 0x8d
-        let addr = self.loadw_move();
-        self.memory.storeb(addr, self.regs.a);
+    fn sta<AM: AddressingMode>(&mut self) {
+        let val = self.regs.a;
+        AM::store(self, val);
     }
 
     fn cmp<AM: AddressingMode>(&mut self) { // 0xc9
-        let v = AM::load(self);
-        println!("Comparing {} and {}", self.regs.a, v);
-        let result = self.regs.a as u16 - v as u16;
+        let val = AM::load(self);
+        println!("Comparing {} and {}", self.regs.a, val);
+        let result = self.regs.a as u16 - val as u16;
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
         self.set_flag(ZERO_FLAG, result == 0);
     }
