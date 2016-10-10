@@ -56,6 +56,17 @@ pub struct CPU {
     memory: mem::Memory,
 }
 
+trait AddressingMode {
+    fn load(cpu: &mut CPU) -> u8;
+}
+
+struct ImmediateAddressingMode;
+impl AddressingMode for ImmediateAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        cpu.loadb_move()
+    }
+}
+
 impl CPU {
     pub fn new(rom_file: &str) -> CPU {
         let rom = rom::ROM::from_file(rom_file);
