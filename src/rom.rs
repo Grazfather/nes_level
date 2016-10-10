@@ -8,7 +8,7 @@ use std::fs::File;
 const INES_HEADER_MAGIC: u32 = 0x1A53454E; // ELF\x1A
 
 pub struct ROM {
-    pub header: iNESHeader,
+    pub header: INESHeader,
     pub prg: Vec<u8>,
     pub chr: Vec<u8>,
 }
@@ -19,10 +19,11 @@ impl ROM {
         let mut header: [u8; 16] = [0; 16];
         f.read_exact(&mut header).unwrap();
 
-        let header = iNESHeader::from_array(&header);
+        let header = INESHeader::from_array(&header);
         println!("Got magic {:x}", header.magic);
         let mut prg = vec![0; header.size_prg as usize * 16384];
         let mut chr = vec![0; header.size_chr as usize * 8192];
+        println!("size prg is {}", header.size_prg); // DELETEME
 
         // We want to ignore the trainer, but if it's there we must seek past it.
         if header.has_trainer() { f.seek(SeekFrom::Current(512)).unwrap(); }
@@ -58,7 +59,7 @@ impl mem::Addressable for ROM {
 }
 
 #[derive(Default)]
-pub struct iNESHeader {
+pub struct INESHeader {
     magic: u32,
     size_prg: u8,
     size_chr: u8,
@@ -70,14 +71,14 @@ pub struct iNESHeader {
     zero: [u8; 5],
 }
 
-impl iNESHeader {
-    fn new() -> iNESHeader {
-        let header: iNESHeader = iNESHeader::default();
+impl INESHeader {
+    fn new() -> INESHeader {
+        let header: INESHeader = INESHeader::default();
         return header
     }
 
-    fn from_array(a: &[u8; 16]) -> iNESHeader {
-        let mut header: iNESHeader = iNESHeader::default();
+    fn from_array(a: &[u8; 16]) -> INESHeader {
+        let mut header: INESHeader = INESHeader::default();
 
         // Create a mutable slice view
         let as_slice: &mut [u8; 16] = unsafe { std::mem::transmute(&mut header) };
