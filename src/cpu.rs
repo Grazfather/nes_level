@@ -39,6 +39,8 @@ const OVERFLOW_FLAG: u8 = 1 << 6;
 const NEG_FLAG: u8 = 1 << 7;
 
 // Opcodes
+const ORA_I: u8 = 0x09; // Or A immediate
+const AND_I: u8 = 0x29; // And A immediate
 const ADC_I: u8 = 0x69; // Add immediate
 const LDA_I: u8 = 0xa9; // Load A immediate
 const LDA_AX: u8 = 0xbd; // Load A absolute,X
@@ -108,12 +110,14 @@ impl CPU {
         println!("Got opcode {:x}", opcode);
         // Process opcode
         match opcode {
-            ADC_I => { self.adc_i(); },
+            ORA_I => { self.ora::<ImmediateAddressingMode>(); },
+            AND_I => { self.and::<ImmediateAddressingMode>(); },
+            ADC_I => { self.adc::<ImmediateAddressingMode>(); },
             LDA_I => { self.lda_i(); },
             LDA_AX => { self.lda_ax(); },
             LDX_I => { self.ldx_i(); },
             STA_A => { self.sta_a(); },
-            CMP_I => { self.cmp_i(); },
+            CMP_I => { self.cmp::<ImmediateAddressingMode>(); },
             _ => {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
@@ -128,10 +132,20 @@ impl CPU {
 
 // Instructions implementation
 impl CPU {
-    fn adc_i(&mut self) { // 0x69
+    fn ora<AM: AddressingMode>(&mut self) {
+        let v = AM::load(self);
+        self.regs.a |= v;
+    }
+
+    fn and<AM: AddressingMode>(&mut self) {
+        let v = AM::load(self);
+        self.regs.a &= v;
+    }
+
+    fn adc<AM: AddressingMode>(&mut self) {
         let mut result = self.regs.a as u16;
-        let i = self.loadb_move();
-        result += i as u16;
+        let v = AM::load(self);
+        result += v as u16;
         if self.get_flag(CARRY_FLAG) { result += 1; }
 
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
@@ -160,10 +174,10 @@ impl CPU {
         self.memory.storeb(addr, self.regs.a);
     }
 
-    fn cmp_i(&mut self) { // 0xc9
-        let v = self.loadb_move();
+    fn cmp<AM: AddressingMode>(&mut self) { // 0xc9
+        let v = AM::load(self);
         println!("Comparing {} and {}", self.regs.a, v);
-        let mut result = self.regs.a as u16 - v as u16;
+        let result = self.regs.a as u16 - v as u16;
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
         self.set_flag(ZERO_FLAG, result == 0);
     }
