@@ -194,10 +194,10 @@ impl CPU {
         AM::store(self, val);
     }
 
-    fn cmp<AM: AddressingMode>(&mut self) { // 0xc9
+    fn cmp<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
         println!("Comparing {} and {}", self.regs.a, val);
-        let result = self.regs.a as u16 - val as u16;
+        let result = (self.regs.a as u16).wrapping_sub(val as u16);
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
         self.set_flag(ZERO_FLAG, result == 0);
     }
