@@ -50,6 +50,13 @@ const LDX_I: u8 = 0xa2; // Load X immediate
 const LDX_A: u8 = 0xae; // Load X absolute
 const STA_A: u8 = 0x8d; // Store A absolute
 const CMP_I: u8 = 0xc9; // Compare immediate
+const CPX_I: u8 = 0xe0; // Compare X immediate
+const CPY_I: u8 = 0xc0; // Compare Y immediate
+const BEQ: u8 = 0xf0; // Branch Equal
+const INX: u8 = 0xe8; // Increment X
+const INY: u8 = 0xc8; // Increment Y
+const JMP_A: u8 = 0x4c; // Jump Absolute
+const JMP_IN: u8 = 0x6c; // Jump Indirect
 
 // Vectors
 const NMI_VECTOR: u16 = 0xFFFA;
@@ -138,6 +145,12 @@ impl CPU {
             LDX_A => { self.ldx::<AbsoluteAddressingMode>(); },
             STA_A => { self.sta::<AbsoluteAddressingMode>(); },
             CMP_I => { self.cmp::<ImmediateAddressingMode>(); },
+            CPX_I => { self.cpx::<ImmediateAddressingMode>(); },
+            CPY_I => { self.cpy::<ImmediateAddressingMode>(); },
+            BEQ => { self.beq::<ImmediateAddressingMode>(); },
+            INX => { self.inx(); },
+            INY => { self.iny(); },
+            JMP_A => { self.jmp(); },
             _ => {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
@@ -184,7 +197,7 @@ impl CPU {
         self.regs.a = val;
     }
 
-    fn ldx<AM: AddressingMode>(&mut self) { // 0xa2
+    fn ldx<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
         self.regs.x = val;
     }
@@ -194,12 +207,52 @@ impl CPU {
         AM::store(self, val);
     }
 
-    fn cmp<AM: AddressingMode>(&mut self) {
-        let val = AM::load(self);
-        println!("Comparing {} and {}", self.regs.a, val);
-        let result = (self.regs.a as u16).wrapping_sub(val as u16);
+    fn compare(&mut self, first: u8, second: u8) {
+        let result = (first as u16).wrapping_sub(second as u16);
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
         self.set_flag(ZERO_FLAG, result == 0);
+    }
+
+    fn cmp<AM: AddressingMode>(&mut self) {
+        let val = AM::load(self);
+        let a = self.regs.a;
+        self.compare(a, val);
+    }
+
+    fn cpx<AM: AddressingMode>(&mut self) {
+        let val = AM::load(self);
+        let x = self.regs.x;
+        self.compare(x, val);
+    }
+
+    fn cpy<AM: AddressingMode>(&mut self) {
+        let val = AM::load(self);
+        let y = self.regs.y;
+        self.compare(y, val);
+    }
+
+    fn beq<AM: AddressingMode>(&mut self) {
+        let addr = AM::load(self);
+        if (self.regs.flags & ZERO_FLAG) != 0 {
+            println!("Jumping to {:x}", addr);
+            self.regs.pc += addr as u16;
+        }
+    }
+
+    fn inx(&mut self) {
+        println!("Incrementing X");
+        self.regs.x += 1;
+    }
+
+    fn iny(&mut self) {
+        println!("Incrementing Y");
+        self.regs.y += 1;
+    }
+
+    fn jmp(&mut self) {
+        let addr = self.loadw_move();
+        println!("Jumping to 0x{:x}", addr);
+        self.regs.pc = addr;
     }
 }
 
