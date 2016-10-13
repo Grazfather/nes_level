@@ -52,7 +52,12 @@ const STA_A: u8 = 0x8d; // Store A absolute
 const CMP_I: u8 = 0xc9; // Compare immediate
 const CPX_I: u8 = 0xe0; // Compare X immediate
 const CPY_I: u8 = 0xc0; // Compare Y immediate
+const CMP_A: u8 = 0xcd; // Compare absolute
+const CPX_A: u8 = 0xec; // Compare X absolute
+const CPY_A: u8 = 0xcc; // Compare Y absolute
 const BEQ: u8 = 0xf0; // Branch Equal
+const DEX: u8 = 0xca; // Increment X
+const DEY: u8 = 0x88; // Increment Y
 const INX: u8 = 0xe8; // Increment X
 const INY: u8 = 0xc8; // Increment Y
 const JMP_A: u8 = 0x4c; // Jump Absolute
@@ -149,7 +154,12 @@ impl CPU {
             CMP_I => { self.cmp::<ImmediateAddressingMode>(); },
             CPX_I => { self.cpx::<ImmediateAddressingMode>(); },
             CPY_I => { self.cpy::<ImmediateAddressingMode>(); },
+            CMP_A => { self.cmp::<AbsoluteAddressingMode>(); },
+            CPX_A => { self.cpx::<AbsoluteAddressingMode>(); },
+            CPY_A => { self.cpy::<AbsoluteAddressingMode>(); },
             BEQ => { self.beq::<ImmediateAddressingMode>(); },
+            DEX => { self.dex(); },
+            DEY => { self.dey(); },
             INX => { self.inx(); },
             INY => { self.iny(); },
             JMP_A => { self.jmp(); },
@@ -250,14 +260,24 @@ impl CPU {
         }
     }
 
+    fn dex(&mut self) {
+        println!("Decrementing X");
+        self.regs.x.wrapping_sub(1);
+    }
+
+    fn dey(&mut self) {
+        println!("Decrementing Y");
+        self.regs.y.wrapping_sub(1);
+    }
+
     fn inx(&mut self) {
         println!("Incrementing X");
-        self.regs.x += 1;
+        self.regs.x.wrapping_add(1);
     }
 
     fn iny(&mut self) {
         println!("Incrementing Y");
-        self.regs.y += 1;
+        self.regs.y.wrapping_add(1);
     }
 
     fn jmp(&mut self) {
