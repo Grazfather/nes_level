@@ -89,6 +89,7 @@ impl AddressingMode for AbsoluteAddressingMode {
     }
     fn store(cpu: &mut CPU, val: u8) {
         let addr = cpu.loadw_move();
+        println!("Storing 0x{:x} to 0x{:x}", val, addr);
         cpu.memory.storeb(addr, val);
     }
 }
@@ -131,7 +132,8 @@ impl CPU {
     pub fn emulate_cycle(&mut self) {
         // Fetch opcode
         let opcode = self.loadb_move();
-        println!("Got opcode {:x}", opcode);
+        println!("{:?}", self.regs);
+        println!("0x{:x}: Got opcode ${:x}", self.regs.pc - 1, opcode);
         // Process opcode
         match opcode {
             ORA_I => { self.ora::<ImmediateAddressingMode>(); },
@@ -167,17 +169,20 @@ impl CPU {
 impl CPU {
     fn ora<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
+        println!("OR-ing A 0x{:x} and 0x{:x}", self.regs.a, val);
         self.regs.a |= val;
     }
 
     fn and<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
+        println!("AND-ing A 0x{:x} and 0x{:x}", self.regs.a, val);
         self.regs.a &= val;
     }
 
     fn adc<AM: AddressingMode>(&mut self) {
         let mut result = self.regs.a as u16;
         let val = AM::load(self);
+        println!("Adding {} to {}", result, val);
         result += val as u16;
         if self.get_flag(CARRY_FLAG) { result += 1; }
 
@@ -188,27 +193,32 @@ impl CPU {
 
     fn lda<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
+        println!("Loading {} into A", val);
         self.regs.a = val;
     }
 
     fn lda_ax(&mut self) { // 0xbd
         let addr = self.loadw_move();
         let val = self.memory.loadb(addr + self.regs.x as u16);
+        println!("Loading 0x{:x} into A from 0x{:x}", val, addr);
         self.regs.a = val;
     }
 
     fn ldx<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
+        println!("Loading {} into X", val);
         self.regs.x = val;
     }
 
     fn sta<AM: AddressingMode>(&mut self) {
         let val = self.regs.a;
+        println!("Storing 0x{:x} from A", val);
         AM::store(self, val);
     }
 
     fn compare(&mut self, first: u8, second: u8) {
         let result = (first as u16).wrapping_sub(second as u16);
+        println!("Comparing 0x{:x} and 0x{:x}", first, second);
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
         self.set_flag(ZERO_FLAG, result == 0);
     }
@@ -232,10 +242,11 @@ impl CPU {
     }
 
     fn beq<AM: AddressingMode>(&mut self) {
-        let addr = AM::load(self);
+        let offset = AM::load(self);
+        println!("Might branch to +0x{:x}", offset);
         if (self.regs.flags & ZERO_FLAG) != 0 {
-            println!("Jumping to {:x}", addr);
-            self.regs.pc += addr as u16;
+            println!("Taking the branch!");
+            self.regs.pc += offset as u16;
         }
     }
 
