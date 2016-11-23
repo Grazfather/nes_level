@@ -65,9 +65,17 @@ const LDX_I: u8 = 0xa2; // Load X, immediate
 const LDY_A: u8 = 0xac; // Load Y, absolute
 const LDY_AX: u8 = 0xbc; // Load Y, absolute,X
 const LDY_I: u8 = 0xa0; // Load Y, immediate
+const NOP: u8 = 0xea; // No Operation
 const ORA_A: u8 = 0x0d; // Or A, absolute
 const ORA_I: u8 = 0x09; // Or A, immediate
 const STA_A: u8 = 0x8d; // Store A, absolute
+const BPL: u8 = 0x10; // Branch Equal
+const BMI: u8 = 0x30; // Branch Equal
+const BVC: u8 = 0x50; // Branch Equal
+const BVS: u8 = 0x70; // Branch Equal
+const BCC: u8 = 0x90; // Branch Equal
+const BCS: u8 = 0xb0; // Branch Equal
+const BNE: u8 = 0xd0; // Branch Equal
 const BEQ: u8 = 0xf0; // Branch Equal
 const DEX: u8 = 0xca; // Decrement X
 const DEY: u8 = 0x88; // Decrement Y
@@ -207,10 +215,18 @@ impl CPU {
             LDY_A => { self.ldy::<AbsoluteAddressingMode>(); },
             LDY_AX => { self.ldy::<AbsoluteXAddressingMode>(); },
             LDY_I => { self.ldy::<ImmediateAddressingMode>(); },
+            NOP => { self.nop(); },
             ORA_A => { self.ora::<AbsoluteAddressingMode>(); },
             ORA_I => { self.ora::<ImmediateAddressingMode>(); },
             STA_A => { self.sta::<AbsoluteAddressingMode>(); },
-            BEQ => { self.beq::<ImmediateAddressingMode>(); },
+            BPL => { self.bpl(); },
+            BMI => { self.bmi(); },
+            BVC => { self.bvc(); },
+            BVS => { self.bvs(); },
+            BCC => { self.bcc(); },
+            BCS => { self.bcs(); },
+            BNE => { self.bne(); },
+            BEQ => { self.beq(); },
             DEX => { self.dex(); },
             DEY => { self.dey(); },
             INX => { self.inx(); },
@@ -272,6 +288,8 @@ impl CPU {
         self.regs.y = val;
     }
 
+    fn nop(&mut self) {}
+
     fn sta<AM: AddressingMode>(&mut self) {
         let val = self.regs.a;
         println!("Storing 0x{:x} from A", val);
@@ -303,9 +321,72 @@ impl CPU {
         self.compare(y, val);
     }
 
-    fn beq<AM: AddressingMode>(&mut self) {
-        let offset = AM::load(self);
-        println!("Might branch to +0x{:x}", offset);
+    fn bpl(&mut self) {
+        let offset = ImmediateAddressingMode::load(self);
+        println!("BPL might branch to +0x{:x}", offset);
+        if (self.regs.flags & NEG_FLAG) == 0 {
+            println!("Taking the branch!");
+            self.regs.pc += offset as u16;
+        }
+    }
+
+    fn bmi(&mut self) {
+        let offset = ImmediateAddressingMode::load(self);
+        println!("BMI might branch to +0x{:x}", offset);
+        if (self.regs.flags & NEG_FLAG) != 0 {
+            println!("Taking the branch!");
+            self.regs.pc += offset as u16;
+        }
+    }
+
+    fn bvc(&mut self) {
+        let offset = ImmediateAddressingMode::load(self);
+        println!("BVC might branch to +0x{:x}", offset);
+        if (self.regs.flags & OVERFLOW_FLAG) == 0 {
+            println!("Taking the branch!");
+            self.regs.pc += offset as u16;
+        }
+    }
+
+    fn bvs(&mut self) {
+        let offset = ImmediateAddressingMode::load(self);
+        println!("BVS might branch to +0x{:x}", offset);
+        if (self.regs.flags & OVERFLOW_FLAG) != 0 {
+            println!("Taking the branch!");
+            self.regs.pc += offset as u16;
+        }
+    }
+
+    fn bcc(&mut self) {
+        let offset = ImmediateAddressingMode::load(self);
+        println!("BCC might branch to +0x{:x}", offset);
+        if (self.regs.flags & CARRY_FLAG) == 0 {
+            println!("Taking the branch!");
+            self.regs.pc += offset as u16;
+        }
+    }
+
+    fn bcs(&mut self) {
+        let offset = ImmediateAddressingMode::load(self);
+        println!("BCS might branch to +0x{:x}", offset);
+        if (self.regs.flags & CARRY_FLAG) != 0 {
+            println!("Taking the branch!");
+            self.regs.pc += offset as u16;
+        }
+    }
+
+    fn bne(&mut self) {
+        let offset = ImmediateAddressingMode::load(self);
+        println!("BNE might branch to +0x{:x}", offset);
+        if (self.regs.flags & ZERO_FLAG) == 0 {
+            println!("Taking the branch!");
+            self.regs.pc += offset as u16;
+        }
+    }
+
+    fn beq(&mut self) {
+        let offset = ImmediateAddressingMode::load(self);
+        println!("BEQ might branch to +0x{:x}", offset);
         if (self.regs.flags & ZERO_FLAG) != 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
