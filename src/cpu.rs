@@ -39,25 +39,38 @@ const OVERFLOW_FLAG: u8 = 1 << 6;
 const NEG_FLAG: u8 = 1 << 7;
 
 // Opcodes
-const ORA_I: u8 = 0x09; // Or A immediate
-const ORA_A: u8 = 0x0d; // Or A absolute
-const AND_I: u8 = 0x29; // And A immediate
-const AND_A: u8 = 0x2d; // And A absolute
-const ADC_I: u8 = 0x69; // Add immediate
-const LDA_I: u8 = 0xa9; // Load A immediate
-const LDA_AX: u8 = 0xbd; // Load A absolute,X
-const LDX_I: u8 = 0xa2; // Load X immediate
-const LDX_A: u8 = 0xae; // Load X absolute
-const STA_A: u8 = 0x8d; // Store A absolute
-const CMP_I: u8 = 0xc9; // Compare immediate
-const CPX_I: u8 = 0xe0; // Compare X immediate
-const CPY_I: u8 = 0xc0; // Compare Y immediate
-const CMP_A: u8 = 0xcd; // Compare absolute
-const CPX_A: u8 = 0xec; // Compare X absolute
-const CPY_A: u8 = 0xcc; // Compare Y absolute
+const ADC_A: u8 = 0x6d; // Add with carry, absolute
+const ADC_AX: u8 = 0x7d; // Add with carry, absolute, X
+const ADC_AY: u8 = 0x79; // Add with carry, absolute, Y
+const ADC_I: u8 = 0x69; // Add with carry, immediate
+const AND_A: u8 = 0x2d; // And A, absolute
+const AND_AX: u8 = 0x3d; // And A, absolute,X
+const AND_AY: u8 = 0x39; // And A, absolute,Y
+const AND_I: u8 = 0x29; // And A, immediate
+const CMP_A: u8 = 0xcd; // Compare, absolute
+const CMP_AX: u8 = 0xdd; // Compare, absolute,X
+const CMP_AY: u8 = 0xd9; // Compare, absolute,Y
+const CMP_I: u8 = 0xc9; // Compare, immediate
+const CPX_A: u8 = 0xec; // Compare X, absolute
+const CPX_I: u8 = 0xe0; // Compare X, immediate
+const CPY_A: u8 = 0xcc; // Compare Y, absolute
+const CPY_I: u8 = 0xc0; // Compare Y, immediate
+const LDA_A: u8 = 0xad; // Load A, immediate
+const LDA_AX: u8 = 0xbd; // Load A, absolute,X
+const LDA_AY: u8 = 0xb9; // Load A, absolute,Y
+const LDA_I: u8 = 0xa9; // Load A, immediate
+const LDX_A: u8 = 0xae; // Load X, absolute
+const LDX_AY: u8 = 0xbe; // Load X, absolute,Y
+const LDX_I: u8 = 0xa2; // Load X, immediate
+const LDY_A: u8 = 0xac; // Load Y, absolute
+const LDY_AX: u8 = 0xbc; // Load Y, absolute,X
+const LDY_I: u8 = 0xa0; // Load Y, immediate
+const ORA_A: u8 = 0x0d; // Or A, absolute
+const ORA_I: u8 = 0x09; // Or A, immediate
+const STA_A: u8 = 0x8d; // Store A, absolute
 const BEQ: u8 = 0xf0; // Branch Equal
-const DEX: u8 = 0xca; // Increment X
-const DEY: u8 = 0x88; // Increment Y
+const DEX: u8 = 0xca; // Decrement X
+const DEY: u8 = 0x88; // Decrement Y
 const INX: u8 = 0xe8; // Increment X
 const INY: u8 = 0xc8; // Increment Y
 const JMP_A: u8 = 0x4c; // Jump Absolute
@@ -94,7 +107,34 @@ impl AddressingMode for AbsoluteAddressingMode {
     }
     fn store(cpu: &mut CPU, val: u8) {
         let addr = cpu.loadw_move();
-        println!("Storing 0x{:x} to 0x{:x}", val, addr);
+        cpu.memory.storeb(addr, val);
+    }
+}
+
+struct AbsoluteXAddressingMode;
+impl AddressingMode for AbsoluteXAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let mut addr = cpu.loadw_move();
+        addr += cpu.regs.x as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let mut addr = cpu.loadw_move();
+        addr += cpu.regs.x as u16;
+        cpu.memory.storeb(addr, val);
+    }
+}
+
+struct AbsoluteYAddressingMode;
+impl AddressingMode for AbsoluteYAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let mut addr = cpu.loadw_move();
+        addr += cpu.regs.y as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let mut addr = cpu.loadw_move();
+        addr += cpu.regs.y as u16;
         cpu.memory.storeb(addr, val);
     }
 }
@@ -141,22 +181,35 @@ impl CPU {
         println!("0x{:x}: Got opcode ${:x}", self.regs.pc - 1, opcode);
         // Process opcode
         match opcode {
-            ORA_I => { self.ora::<ImmediateAddressingMode>(); },
-            ORA_A => { self.ora::<AbsoluteAddressingMode>(); },
-            AND_I => { self.and::<ImmediateAddressingMode>(); },
-            AND_A => { self.and::<AbsoluteAddressingMode>(); },
+            ADC_A => { self.adc::<AbsoluteAddressingMode>(); },
+            ADC_AX => { self.adc::<AbsoluteXAddressingMode>(); },
+            ADC_AY => { self.adc::<AbsoluteYAddressingMode>(); },
             ADC_I => { self.adc::<ImmediateAddressingMode>(); },
-            LDA_I => { self.lda::<ImmediateAddressingMode>(); },
-            LDA_AX => { self.lda_ax(); },
-            LDX_I => { self.ldx::<ImmediateAddressingMode>(); },
-            LDX_A => { self.ldx::<AbsoluteAddressingMode>(); },
-            STA_A => { self.sta::<AbsoluteAddressingMode>(); },
-            CMP_I => { self.cmp::<ImmediateAddressingMode>(); },
-            CPX_I => { self.cpx::<ImmediateAddressingMode>(); },
-            CPY_I => { self.cpy::<ImmediateAddressingMode>(); },
+            AND_A => { self.and::<AbsoluteAddressingMode>(); },
+            AND_AX => { self.and::<AbsoluteXAddressingMode>(); },
+            AND_AY => { self.and::<AbsoluteYAddressingMode>(); },
+            AND_I => { self.and::<ImmediateAddressingMode>(); },
             CMP_A => { self.cmp::<AbsoluteAddressingMode>(); },
+            CMP_AX => { self.cmp::<AbsoluteXAddressingMode>(); },
+            CMP_AY => { self.cmp::<AbsoluteYAddressingMode>(); },
+            CMP_I => { self.cmp::<ImmediateAddressingMode>(); },
             CPX_A => { self.cpx::<AbsoluteAddressingMode>(); },
+            CPX_I => { self.cpx::<ImmediateAddressingMode>(); },
             CPY_A => { self.cpy::<AbsoluteAddressingMode>(); },
+            CPY_I => { self.cpy::<ImmediateAddressingMode>(); },
+            LDA_A => { self.lda::<AbsoluteAddressingMode>(); },
+            LDA_AX => { self.lda::<AbsoluteXAddressingMode>(); },
+            LDA_AY => { self.lda::<AbsoluteYAddressingMode>(); },
+            LDA_I => { self.lda::<ImmediateAddressingMode>(); },
+            LDX_A => { self.ldx::<AbsoluteAddressingMode>(); },
+            LDX_AY => { self.ldx::<AbsoluteYAddressingMode>(); },
+            LDX_I => { self.ldx::<ImmediateAddressingMode>(); },
+            LDY_A => { self.ldy::<AbsoluteAddressingMode>(); },
+            LDY_AX => { self.ldy::<AbsoluteXAddressingMode>(); },
+            LDY_I => { self.ldy::<ImmediateAddressingMode>(); },
+            ORA_A => { self.ora::<AbsoluteAddressingMode>(); },
+            ORA_I => { self.ora::<ImmediateAddressingMode>(); },
+            STA_A => { self.sta::<AbsoluteAddressingMode>(); },
             BEQ => { self.beq::<ImmediateAddressingMode>(); },
             DEX => { self.dex(); },
             DEY => { self.dey(); },
@@ -207,17 +260,16 @@ impl CPU {
         self.regs.a = val;
     }
 
-    fn lda_ax(&mut self) { // 0xbd
-        let addr = self.loadw_move();
-        let val = self.memory.loadb(addr + self.regs.x as u16);
-        println!("Loading 0x{:x} into A from 0x{:x}", val, addr);
-        self.regs.a = val;
-    }
-
     fn ldx<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
         println!("Loading {} into X", val);
         self.regs.x = val;
+    }
+
+    fn ldy<AM: AddressingMode>(&mut self) {
+        let val = AM::load(self);
+        println!("Loading {} into Y", val);
+        self.regs.y = val;
     }
 
     fn sta<AM: AddressingMode>(&mut self) {
