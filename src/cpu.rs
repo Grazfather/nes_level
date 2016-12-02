@@ -38,52 +38,6 @@ const S2_FLAG: u8 = 1 << 5;
 const OVERFLOW_FLAG: u8 = 1 << 6;
 const NEG_FLAG: u8 = 1 << 7;
 
-// Opcodes
-const ADC_A: u8 = 0x6d; // Add with carry, absolute
-const ADC_AX: u8 = 0x7d; // Add with carry, absolute, X
-const ADC_AY: u8 = 0x79; // Add with carry, absolute, Y
-const ADC_I: u8 = 0x69; // Add with carry, immediate
-const AND_A: u8 = 0x2d; // And A, absolute
-const AND_AX: u8 = 0x3d; // And A, absolute,X
-const AND_AY: u8 = 0x39; // And A, absolute,Y
-const AND_I: u8 = 0x29; // And A, immediate
-const CMP_A: u8 = 0xcd; // Compare, absolute
-const CMP_AX: u8 = 0xdd; // Compare, absolute,X
-const CMP_AY: u8 = 0xd9; // Compare, absolute,Y
-const CMP_I: u8 = 0xc9; // Compare, immediate
-const CPX_A: u8 = 0xec; // Compare X, absolute
-const CPX_I: u8 = 0xe0; // Compare X, immediate
-const CPY_A: u8 = 0xcc; // Compare Y, absolute
-const CPY_I: u8 = 0xc0; // Compare Y, immediate
-const LDA_A: u8 = 0xad; // Load A, immediate
-const LDA_AX: u8 = 0xbd; // Load A, absolute,X
-const LDA_AY: u8 = 0xb9; // Load A, absolute,Y
-const LDA_I: u8 = 0xa9; // Load A, immediate
-const LDX_A: u8 = 0xae; // Load X, absolute
-const LDX_AY: u8 = 0xbe; // Load X, absolute,Y
-const LDX_I: u8 = 0xa2; // Load X, immediate
-const LDY_A: u8 = 0xac; // Load Y, absolute
-const LDY_AX: u8 = 0xbc; // Load Y, absolute,X
-const LDY_I: u8 = 0xa0; // Load Y, immediate
-const NOP: u8 = 0xea; // No Operation
-const ORA_A: u8 = 0x0d; // Or A, absolute
-const ORA_I: u8 = 0x09; // Or A, immediate
-const STA_A: u8 = 0x8d; // Store A, absolute
-const BPL: u8 = 0x10; // Branch Equal
-const BMI: u8 = 0x30; // Branch Equal
-const BVC: u8 = 0x50; // Branch Equal
-const BVS: u8 = 0x70; // Branch Equal
-const BCC: u8 = 0x90; // Branch Equal
-const BCS: u8 = 0xb0; // Branch Equal
-const BNE: u8 = 0xd0; // Branch Equal
-const BEQ: u8 = 0xf0; // Branch Equal
-const DEX: u8 = 0xca; // Decrement X
-const DEY: u8 = 0x88; // Decrement Y
-const INX: u8 = 0xe8; // Increment X
-const INY: u8 = 0xc8; // Increment Y
-const JMP_A: u8 = 0x4c; // Jump Absolute
-const JMP_IN: u8 = 0x6c; // Jump Indirect
-
 // Vectors
 const NMI_VECTOR: u16 = 0xFFFA;
 const RESET_VECTOR: u16 = 0xFFFC;
@@ -189,49 +143,56 @@ impl CPU {
         println!("0x{:x}: Got opcode ${:x}", self.regs.pc - 1, opcode);
         // Process opcode
         match opcode {
-            ADC_A => { self.adc::<AbsoluteAddressingMode>(); },
-            ADC_AX => { self.adc::<AbsoluteXAddressingMode>(); },
-            ADC_AY => { self.adc::<AbsoluteYAddressingMode>(); },
-            ADC_I => { self.adc::<ImmediateAddressingMode>(); },
-            AND_A => { self.and::<AbsoluteAddressingMode>(); },
-            AND_AX => { self.and::<AbsoluteXAddressingMode>(); },
-            AND_AY => { self.and::<AbsoluteYAddressingMode>(); },
-            AND_I => { self.and::<ImmediateAddressingMode>(); },
-            CMP_A => { self.cmp::<AbsoluteAddressingMode>(); },
-            CMP_AX => { self.cmp::<AbsoluteXAddressingMode>(); },
-            CMP_AY => { self.cmp::<AbsoluteYAddressingMode>(); },
-            CMP_I => { self.cmp::<ImmediateAddressingMode>(); },
-            CPX_A => { self.cpx::<AbsoluteAddressingMode>(); },
-            CPX_I => { self.cpx::<ImmediateAddressingMode>(); },
-            CPY_A => { self.cpy::<AbsoluteAddressingMode>(); },
-            CPY_I => { self.cpy::<ImmediateAddressingMode>(); },
-            LDA_A => { self.lda::<AbsoluteAddressingMode>(); },
-            LDA_AX => { self.lda::<AbsoluteXAddressingMode>(); },
-            LDA_AY => { self.lda::<AbsoluteYAddressingMode>(); },
-            LDA_I => { self.lda::<ImmediateAddressingMode>(); },
-            LDX_A => { self.ldx::<AbsoluteAddressingMode>(); },
-            LDX_AY => { self.ldx::<AbsoluteYAddressingMode>(); },
-            LDX_I => { self.ldx::<ImmediateAddressingMode>(); },
-            LDY_A => { self.ldy::<AbsoluteAddressingMode>(); },
-            LDY_AX => { self.ldy::<AbsoluteXAddressingMode>(); },
-            LDY_I => { self.ldy::<ImmediateAddressingMode>(); },
-            NOP => { self.nop(); },
-            ORA_A => { self.ora::<AbsoluteAddressingMode>(); },
-            ORA_I => { self.ora::<ImmediateAddressingMode>(); },
-            STA_A => { self.sta::<AbsoluteAddressingMode>(); },
-            BPL => { self.bpl(); },
-            BMI => { self.bmi(); },
-            BVC => { self.bvc(); },
-            BVS => { self.bvs(); },
-            BCC => { self.bcc(); },
-            BCS => { self.bcs(); },
-            BNE => { self.bne(); },
-            BEQ => { self.beq(); },
-            DEX => { self.dex(); },
-            DEY => { self.dey(); },
-            INX => { self.inx(); },
-            INY => { self.iny(); },
-            JMP_A => { self.jmp(); },
+            // Adds
+            0x6d => { self.adc::<AbsoluteAddressingMode>(); },
+            0x7d => { self.adc::<AbsoluteXAddressingMode>(); },
+            0x79 => { self.adc::<AbsoluteYAddressingMode>(); },
+            0x69 => { self.adc::<ImmediateAddressingMode>(); },
+            // And
+            0x2d => { self.and::<AbsoluteAddressingMode>(); },
+            0x3d => { self.and::<AbsoluteXAddressingMode>(); },
+            0x39 => { self.and::<AbsoluteYAddressingMode>(); },
+            0x29 => { self.and::<ImmediateAddressingMode>(); },
+            // Cmp
+            0xcd => { self.cmp::<AbsoluteAddressingMode>(); },
+            0xdd => { self.cmp::<AbsoluteXAddressingMode>(); },
+            0xd9 => { self.cmp::<AbsoluteYAddressingMode>(); },
+            0xc9 => { self.cmp::<ImmediateAddressingMode>(); },
+            0xec => { self.cpx::<AbsoluteAddressingMode>(); },
+            0xe0 => { self.cpx::<ImmediateAddressingMode>(); },
+            0xcc => { self.cpy::<AbsoluteAddressingMode>(); },
+            0xc0 => { self.cpy::<ImmediateAddressingMode>(); },
+            // Loads
+            0xad => { self.lda::<AbsoluteAddressingMode>(); },
+            0xbd => { self.lda::<AbsoluteXAddressingMode>(); },
+            0xb9 => { self.lda::<AbsoluteYAddressingMode>(); },
+            0xa9 => { self.lda::<ImmediateAddressingMode>(); },
+            0xae => { self.ldx::<AbsoluteAddressingMode>(); },
+            0xbe => { self.ldx::<AbsoluteYAddressingMode>(); },
+            0xa2 => { self.ldx::<ImmediateAddressingMode>(); },
+            0xac => { self.ldy::<AbsoluteAddressingMode>(); },
+            0xbc => { self.ldy::<AbsoluteXAddressingMode>(); },
+            0xa0 => { self.ldy::<ImmediateAddressingMode>(); },
+            // Nop
+            0xea => { self.nop(); },
+            // Boolean
+            0x0d => { self.ora::<AbsoluteAddressingMode>(); },
+            0x09 => { self.ora::<ImmediateAddressingMode>(); },
+            0x8d => { self.sta::<AbsoluteAddressingMode>(); },
+            // Branches
+            0x10 => { self.bpl(); },
+            0x30 => { self.bmi(); },
+            0x50 => { self.bvc(); },
+            0x70 => { self.bvs(); },
+            0x90 => { self.bcc(); },
+            0xb0 => { self.bcs(); },
+            0xd0 => { self.bne(); },
+            0xf0 => { self.beq(); },
+            0xca => { self.dex(); },
+            0x88 => { self.dey(); },
+            0xe8 => { self.inx(); },
+            0xc8 => { self.iny(); },
+            0x4c => { self.jmp(); },
             _ => {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
