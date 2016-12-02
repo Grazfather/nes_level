@@ -53,62 +53,40 @@ impl Memory {
 
 impl Addressable for Memory {
     fn loadb(&self, addr: u16) -> u8 {
-        // First 0x2000 bytes are 0x800 bytes of RAM mirrored 4 times
-        if addr < 0x2000 {
-            self.ram.loadb(addr & 0x7ff)
-        }
-        // Next 0x2000 are 8 bytes mirrored a ton
-        else if addr >= 0x2000 && addr < 0x4000 {
-            //self.ppu.loadb((addr & 0x7) + 0x2000)
-            0u8
-        }
-        // Next 0x20 are APU
-        else if addr >= 0x4000 && addr < 0x4020 {
-            //self.apu.loadb(addr)
-            0u8
-        }
-        // 0x4020 - 0x6000 are Expansion ROM
-        else if addr >= 0x4020 && addr < 0x6000 {
-            0u8
-        }
-        // 0x6000 - 0x8000 are Cartridge SRAM
-        else if addr >= 0x6000 && addr < 0x8000 {
-            0u8
-        }
-        // The rest is mapped to the cartridge
-        else {
-            self.rom.loadb(addr)
+        match addr {
+            // First 0x2000 bytes are 0x800 bytes of RAM mirrored 4 times
+            0...0x1FFF => self.ram.loadb(addr & 0x7ff),
+            // Next 0x2000 are 8 bytes mirrored a ton
+            0x2000 ... 0x3FFF => 0u8,
+            // Next 0x20 are APU
+            0x4000 ... 0x401F => 0u8,
+            // 0x4020 - 0x6000 are Expansion ROM
+            0x4020 ... 0x5FFF => 0u8,
+            // 0x6000 - 0x8000 are Cartridge SRAM
+            0x6000 ... 0x7FFF => 0u8,
+            _ => self.rom.loadb(addr)
         }
     }
 
     fn storeb(&mut self, addr: u16, val: u8) {
-        // First 0x2000 bytes are 0x800 bytes of RAM mirrored 4 times
-        if addr < 0x2000 {
-            self.ram.storeb(addr & 0x7ff, val);
+        match addr {
+            // First 0x2000 bytes are 0x800 bytes of RAM mirrored 4 times
+            0...0x1FFF => self.ram.storeb(addr & 0x7ff, val),
+            // Next 0x2000 are 8 bytes mirrored a ton
+            0x2000 ... 0x3FFF => {},
+            // Next 0x20 are APU
+            0x4000 ... 0x401F => {},
+            // 0x4020 - 0x6000 are Expansion ROM
+            0x4020 ... 0x5FFF => {},
+            // 0x6000 - 0x8000 are Cartridge SRAM
+            0x6000 ... 0x7FFF => {},
+            // The rest is mapped to the cartridge
+            // If the size_prg is 1, then it's mirrored twice
+            // * 0x8000 to 0xC000
+            // * 0xC000 to 0x10000
+            // If the size_prg is more than 2, then the cartridge must have a mapper
+            // TODO: Will the ROM panic if the writes are to ROM?
+            _ => {},
         }
-        // Next 0x2000 are 8 bytes mirrored a ton
-        else if addr >= 0x2000 && addr < 0x4000 {
-            //self.ppu.storeb((addr & 0x7) + 0x2000, val);
-        }
-        // Next 0x20 are APU
-        else if addr >= 0x4000 && addr < 0x4020 {
-            //self.apu.storeb(addr, val);
-        }
-        // 0x4020 - 0x6000 are Expansion ROM
-        else if addr >= 0x4020 && addr < 0x6000 {
-        }
-        // 0x6000 - 0x8000 are Cartridge SRAM
-        else if addr >= 0x6000 && addr < 0x8000 {
-        }
-        // The rest is mapped to the cartridge
-        // If the size_prg is 1, then it's mirrored twice
-        // * 0x8000 to 0xC000
-        // * 0xC000 to 0x10000
-        // If the size_prg is more than 2, then the cartridge must have a mapper
-        // TODO: Will the ROM panic if the writes are to ROM?
-        else {
-            //self.rom.storeb(addr, val);
-        }
-
     }
 }
