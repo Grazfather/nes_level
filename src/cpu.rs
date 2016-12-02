@@ -143,17 +143,14 @@ impl CPU {
         println!("0x{:x}: Got opcode ${:x}", self.regs.pc - 1, opcode);
         // Process opcode
         match opcode {
-            // Adds
+            // Arithmetic
+            // -- Adds
+            0x69 => { self.adc::<ImmediateAddressingMode>(); },
             0x6d => { self.adc::<AbsoluteAddressingMode>(); },
             0x7d => { self.adc::<AbsoluteXAddressingMode>(); },
             0x79 => { self.adc::<AbsoluteYAddressingMode>(); },
-            0x69 => { self.adc::<ImmediateAddressingMode>(); },
-            // And
-            0x2d => { self.and::<AbsoluteAddressingMode>(); },
-            0x3d => { self.and::<AbsoluteXAddressingMode>(); },
-            0x39 => { self.and::<AbsoluteYAddressingMode>(); },
-            0x29 => { self.and::<ImmediateAddressingMode>(); },
-            // Cmp
+            // -- Subs
+            // Comparisons
             0xcd => { self.cmp::<AbsoluteAddressingMode>(); },
             0xdd => { self.cmp::<AbsoluteXAddressingMode>(); },
             0xd9 => { self.cmp::<AbsoluteYAddressingMode>(); },
@@ -173,12 +170,23 @@ impl CPU {
             0xac => { self.ldy::<AbsoluteAddressingMode>(); },
             0xbc => { self.ldy::<AbsoluteXAddressingMode>(); },
             0xa0 => { self.ldy::<ImmediateAddressingMode>(); },
+            // Stores
+            0x8d => { self.sta::<AbsoluteAddressingMode>(); },
             // Nop
             0xea => { self.nop(); },
             // Boolean
-            0x0d => { self.ora::<AbsoluteAddressingMode>(); },
+            // -- And
+            0x29 => { self.and::<ImmediateAddressingMode>(); },
+            0x2d => { self.and::<AbsoluteAddressingMode>(); },
+            0x3d => { self.and::<AbsoluteXAddressingMode>(); },
+            0x39 => { self.and::<AbsoluteYAddressingMode>(); },
+            // -- Or
             0x09 => { self.ora::<ImmediateAddressingMode>(); },
-            0x8d => { self.sta::<AbsoluteAddressingMode>(); },
+            0x0d => { self.ora::<AbsoluteAddressingMode>(); },
+            0x1d => { self.ora::<AbsoluteXAddressingMode>(); },
+            0x19 => { self.ora::<AbsoluteYAddressingMode>(); },
+            // -- Eor
+            // -- Bit set
             // Branches
             0x10 => { self.bpl(); },
             0x30 => { self.bmi(); },
@@ -188,11 +196,13 @@ impl CPU {
             0xb0 => { self.bcs(); },
             0xd0 => { self.bne(); },
             0xf0 => { self.beq(); },
+            // Jumps
+            0x4c => { self.jmp(); },
+            // Increment and decrement
             0xca => { self.dex(); },
             0x88 => { self.dey(); },
             0xe8 => { self.inx(); },
             0xc8 => { self.iny(); },
-            0x4c => { self.jmp(); },
             _ => {
                 panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
             }
