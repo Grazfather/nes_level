@@ -101,6 +101,46 @@ impl AddressingMode for AbsoluteYAddressingMode {
     }
 }
 
+struct ZeroPageAddressingMode;
+impl AddressingMode for ZeroPageAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let addr = cpu.loadb_move() as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let addr = cpu.loadb_move() as u16;
+        cpu.memory.storeb(addr, val);
+    }
+}
+
+struct ZeroPageXAddressingMode;
+impl AddressingMode for ZeroPageXAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let mut addr = cpu.loadb_move() as u16;
+        addr += cpu.regs.x as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let mut addr = cpu.loadb_move() as u16;
+        addr += cpu.regs.x as u16;
+        cpu.memory.storeb(addr, val);
+    }
+}
+
+struct ZeroPageYAddressingMode;
+impl AddressingMode for ZeroPageYAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let mut addr = cpu.loadb_move() as u16;
+        addr += cpu.regs.y as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let mut addr = cpu.loadb_move() as u16;
+        addr += cpu.regs.y as u16;
+        cpu.memory.storeb(addr, val);
+    }
+}
+
 impl CPU {
     pub fn new(rom_file: &str) -> CPU {
         let rom = rom::ROM::from_file(rom_file);
@@ -146,42 +186,68 @@ impl CPU {
             // Arithmetic
             // -- Adds
             0x69 => { self.adc::<ImmediateAddressingMode>(); },
+            0x65 => { self.adc::<ZeroPageAddressingMode>(); },
+            0x75 => { self.adc::<ZeroPageXAddressingMode>(); },
             0x6d => { self.adc::<AbsoluteAddressingMode>(); },
             0x7d => { self.adc::<AbsoluteXAddressingMode>(); },
             0x79 => { self.adc::<AbsoluteYAddressingMode>(); },
             // -- Subs
             // Comparisons
+            // -- Cmp A
+            0xc9 => { self.cmp::<ImmediateAddressingMode>(); },
+            0xc5 => { self.cmp::<ZeroPageAddressingMode>(); },
+            0xd5 => { self.cmp::<ZeroPageXAddressingMode>(); },
             0xcd => { self.cmp::<AbsoluteAddressingMode>(); },
             0xdd => { self.cmp::<AbsoluteXAddressingMode>(); },
             0xd9 => { self.cmp::<AbsoluteYAddressingMode>(); },
-            0xc9 => { self.cmp::<ImmediateAddressingMode>(); },
-            0xec => { self.cpx::<AbsoluteAddressingMode>(); },
+            // -- Cmp X
             0xe0 => { self.cpx::<ImmediateAddressingMode>(); },
-            0xcc => { self.cpy::<AbsoluteAddressingMode>(); },
+            0xe4 => { self.cpx::<ZeroPageAddressingMode>(); },
+            0xec => { self.cpx::<AbsoluteAddressingMode>(); },
+            // -- Cmp Y
             0xc0 => { self.cpy::<ImmediateAddressingMode>(); },
+            0xc4 => { self.cpy::<ZeroPageAddressingMode>(); },
+            0xcc => { self.cpy::<AbsoluteAddressingMode>(); },
             // Loads
+            // -- Load A
+            0xa9 => { self.lda::<ImmediateAddressingMode>(); },
+            0xa5 => { self.lda::<ZeroPageAddressingMode>(); },
+            0xb5 => { self.lda::<ZeroPageXAddressingMode>(); },
             0xad => { self.lda::<AbsoluteAddressingMode>(); },
             0xbd => { self.lda::<AbsoluteXAddressingMode>(); },
             0xb9 => { self.lda::<AbsoluteYAddressingMode>(); },
-            0xa9 => { self.lda::<ImmediateAddressingMode>(); },
+            // -- Load X
+            0xa2 => { self.ldx::<ImmediateAddressingMode>(); },
+            0xa6 => { self.ldx::<ZeroPageAddressingMode>(); },
+            0xb6 => { self.ldx::<ZeroPageYAddressingMode>(); },
             0xae => { self.ldx::<AbsoluteAddressingMode>(); },
             0xbe => { self.ldx::<AbsoluteYAddressingMode>(); },
-            0xa2 => { self.ldx::<ImmediateAddressingMode>(); },
+            // -- Load Y
+            0xa0 => { self.ldy::<ImmediateAddressingMode>(); },
+            0xa4 => { self.lda::<ZeroPageAddressingMode>(); },
+            0xb4 => { self.lda::<ZeroPageXAddressingMode>(); },
             0xac => { self.ldy::<AbsoluteAddressingMode>(); },
             0xbc => { self.ldy::<AbsoluteXAddressingMode>(); },
-            0xa0 => { self.ldy::<ImmediateAddressingMode>(); },
             // Stores
+            0x85 => { self.sta::<ZeroPageAddressingMode>(); },
+            0x95 => { self.sta::<ZeroPageXAddressingMode>(); },
             0x8d => { self.sta::<AbsoluteAddressingMode>(); },
+            0x9d => { self.sta::<AbsoluteXAddressingMode>(); },
+            0x99 => { self.sta::<AbsoluteYAddressingMode>(); },
             // Nop
             0xea => { self.nop(); },
             // Boolean
             // -- And
             0x29 => { self.and::<ImmediateAddressingMode>(); },
+            0x25 => { self.and::<ZeroPageAddressingMode>(); },
+            0x35 => { self.and::<ZeroPageXAddressingMode>(); },
             0x2d => { self.and::<AbsoluteAddressingMode>(); },
             0x3d => { self.and::<AbsoluteXAddressingMode>(); },
             0x39 => { self.and::<AbsoluteYAddressingMode>(); },
             // -- Or
             0x09 => { self.ora::<ImmediateAddressingMode>(); },
+            0x05 => { self.ora::<ZeroPageAddressingMode>(); },
+            0x15 => { self.ora::<ZeroPageXAddressingMode>(); },
             0x0d => { self.ora::<AbsoluteAddressingMode>(); },
             0x1d => { self.ora::<AbsoluteXAddressingMode>(); },
             0x19 => { self.ora::<AbsoluteYAddressingMode>(); },
