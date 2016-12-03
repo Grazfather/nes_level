@@ -192,6 +192,12 @@ impl CPU {
             0x7d => { self.adc::<AbsoluteXAddressingMode>(); },
             0x79 => { self.adc::<AbsoluteYAddressingMode>(); },
             // -- Subs
+            0xe9 => { self.sbc::<ImmediateAddressingMode>(); },
+            0xe5 => { self.sbc::<ZeroPageAddressingMode>(); },
+            0xf5 => { self.sbc::<ZeroPageXAddressingMode>(); },
+            0xed => { self.sbc::<AbsoluteAddressingMode>(); },
+            0xfd => { self.sbc::<AbsoluteXAddressingMode>(); },
+            0xf9 => { self.sbc::<AbsoluteYAddressingMode>(); },
             // Comparisons
             // -- Cmp A
             0xc9 => { self.cmp::<ImmediateAddressingMode>(); },
@@ -301,6 +307,18 @@ impl CPU {
         println!("Adding {} to {}", result, val);
         result += val as u16;
         if self.get_flag(CARRY_FLAG) { result += 1; }
+
+        self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
+
+        self.regs.a = result as u8;
+    }
+
+    fn sbc<AM: AddressingMode>(&mut self) {
+        let mut result = self.regs.a as u16;
+        let val = AM::load(self);
+        println!("Subtracting {} from {}", result, val);
+        result -= val as u16;
+        if self.get_flag(CARRY_FLAG) { result -= 1; }
 
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
 
