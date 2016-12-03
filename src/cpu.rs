@@ -79,10 +79,36 @@ impl AddressingMode for AbsoluteAddressingMode {
     }
 }
 
+struct AbsoluteWBAddressingMode;
+impl AddressingMode for AbsoluteWBAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let addr = cpu.memory.loadb(cpu.regs.pc) as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let addr = cpu.loadw_move();
+        cpu.memory.storeb(addr, val);
+    }
+}
+
 struct AbsoluteXAddressingMode;
 impl AddressingMode for AbsoluteXAddressingMode {
     fn load(cpu: &mut CPU) -> u8 {
         let mut addr = cpu.loadw_move();
+        addr += cpu.regs.x as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let mut addr = cpu.loadw_move();
+        addr += cpu.regs.x as u16;
+        cpu.memory.storeb(addr, val);
+    }
+}
+
+struct AbsoluteXWBAddressingMode;
+impl AddressingMode for AbsoluteXWBAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let mut addr = cpu.memory.loadb(cpu.regs.pc) as u16;
         addr += cpu.regs.x as u16;
         cpu.memory.loadb(addr)
     }
@@ -119,10 +145,36 @@ impl AddressingMode for ZeroPageAddressingMode {
     }
 }
 
+struct ZeroPageWBAddressingMode;
+impl AddressingMode for ZeroPageWBAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let addr = cpu.memory.loadb(cpu.regs.pc) as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let addr = cpu.loadb_move() as u16;
+        cpu.memory.storeb(addr, val);
+    }
+}
+
 struct ZeroPageXAddressingMode;
 impl AddressingMode for ZeroPageXAddressingMode {
     fn load(cpu: &mut CPU) -> u8 {
         let mut addr = cpu.loadb_move() as u16;
+        addr += cpu.regs.x as u16;
+        cpu.memory.loadb(addr)
+    }
+    fn store(cpu: &mut CPU, val: u8) {
+        let mut addr = cpu.loadb_move() as u16;
+        addr += cpu.regs.x as u16;
+        cpu.memory.storeb(addr, val);
+    }
+}
+
+struct ZeroPageXWBAddressingMode;
+impl AddressingMode for ZeroPageXWBAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 {
+        let mut addr = cpu.memory.loadb(cpu.regs.pc) as u16;
         addr += cpu.regs.x as u16;
         cpu.memory.loadb(addr)
     }
@@ -283,12 +335,28 @@ impl CPU {
             // Shifts
             // -- Asl
             0x0a => { self.asl::<AccumulatorAddressingMode>(); },
+            0x06 => { self.asl::<ZeroPageWBAddressingMode>(); },
+            0x16 => { self.asl::<ZeroPageXWBAddressingMode>(); },
+            0x0e => { self.asl::<AbsoluteWBAddressingMode>(); },
+            0x1e => { self.asl::<AbsoluteXWBAddressingMode>(); },
             // -- Rol
             0x2a => { self.rol::<AccumulatorAddressingMode>(); },
+            0x26 => { self.rol::<ZeroPageWBAddressingMode>(); },
+            0x36 => { self.rol::<ZeroPageXWBAddressingMode>(); },
+            0x2e => { self.rol::<AbsoluteWBAddressingMode>(); },
+            0x3e => { self.rol::<AbsoluteXWBAddressingMode>(); },
             // -- Lsr
             0x4a => { self.lsr::<AccumulatorAddressingMode>(); },
+            0x46 => { self.lsr::<ZeroPageWBAddressingMode>(); },
+            0x56 => { self.lsr::<ZeroPageXWBAddressingMode>(); },
+            0x4e => { self.lsr::<AbsoluteWBAddressingMode>(); },
+            0x5e => { self.lsr::<AbsoluteXWBAddressingMode>(); },
             // -- Ror
             0x6a => { self.ror::<AccumulatorAddressingMode>(); },
+            0x66 => { self.ror::<ZeroPageWBAddressingMode>(); },
+            0x76 => { self.ror::<ZeroPageXWBAddressingMode>(); },
+            0x6e => { self.ror::<AbsoluteWBAddressingMode>(); },
+            0x7e => { self.ror::<AbsoluteXWBAddressingMode>(); },
             // Branches
             0x10 => { self.bpl(); },
             0x30 => { self.bmi(); },
