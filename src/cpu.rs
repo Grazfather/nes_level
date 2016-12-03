@@ -53,6 +53,12 @@ trait AddressingMode {
     fn store(cpu: &mut CPU, val: u8);
 }
 
+struct AccumulatorAddressingMode;
+impl AddressingMode for AccumulatorAddressingMode {
+    fn load(cpu: &mut CPU) -> u8 { cpu.regs.a }
+    fn store(cpu: &mut CPU, val: u8) { cpu.regs.a = val; }
+}
+
 struct ImmediateAddressingMode;
 impl AddressingMode for ImmediateAddressingMode {
     fn load(cpu: &mut CPU) -> u8 {
@@ -274,6 +280,15 @@ impl CPU {
             0x5d => { self.eor::<AbsoluteXAddressingMode>(); },
             0x59 => { self.eor::<AbsoluteYAddressingMode>(); },
             // -- Bit set
+            // Shifts
+            // -- Asl
+            0x0a => { self.asl::<AccumulatorAddressingMode>(); },
+            // -- Rol
+            0x2a => { self.rol::<AccumulatorAddressingMode>(); },
+            // -- Lsr
+            0x4a => { self.lsr::<AccumulatorAddressingMode>(); },
+            // -- Ror
+            0x6a => { self.ror::<AccumulatorAddressingMode>(); },
             // Branches
             0x10 => { self.bpl(); },
             0x30 => { self.bmi(); },
@@ -320,6 +335,40 @@ impl CPU {
         let val = AM::load(self);
         println!("AND-ing A 0x{:x} and 0x{:x}", self.regs.a, val);
         self.regs.a &= val;
+    }
+
+    fn asl<AM: AddressingMode>(&mut self) {
+        let mut val = AM::load(self);
+        let top_bit = (val & 0x80) != 0;
+        val <<= 1;
+        self.set_flag(CARRY_FLAG, top_bit);
+        AM::store(self, val);
+    }
+
+    fn rol<AM: AddressingMode>(&mut self) {
+        let mut val = AM::load(self);
+        let top_bit = (val & 0x80) != 0;
+        val <<= 1;
+        val |= self.get_flag(CARRY_FLAG) as u8;
+        self.set_flag(CARRY_FLAG, top_bit);
+        AM::store(self, val);
+    }
+
+    fn lsr<AM: AddressingMode>(&mut self) {
+        let mut val = AM::load(self);
+        let low_bit = (val & 0x1) != 0;
+        val >>= 1;
+        self.set_flag(CARRY_FLAG, low_bit);
+        AM::store(self, val);
+    }
+
+    fn ror<AM: AddressingMode>(&mut self) {
+        let mut val = AM::load(self);
+        let low_bit = (val & 0x1) != 0;
+        val >>= 1;
+        val |= (self.get_flag(CARRY_FLAG) as u8) << 7;
+        self.set_flag(CARRY_FLAG, low_bit);
+        AM::store(self, val);
     }
 
     fn adc<AM: AddressingMode>(&mut self) {
