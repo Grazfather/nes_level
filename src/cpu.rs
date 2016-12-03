@@ -235,11 +235,20 @@ impl CPU {
             0xac => { self.ldy::<AbsoluteAddressingMode>(); },
             0xbc => { self.ldy::<AbsoluteXAddressingMode>(); },
             // Stores
+            // -- Store A
             0x85 => { self.sta::<ZeroPageAddressingMode>(); },
             0x95 => { self.sta::<ZeroPageXAddressingMode>(); },
             0x8d => { self.sta::<AbsoluteAddressingMode>(); },
             0x9d => { self.sta::<AbsoluteXAddressingMode>(); },
             0x99 => { self.sta::<AbsoluteYAddressingMode>(); },
+            // -- Store X
+            0x86 => { self.stx::<ZeroPageAddressingMode>(); },
+            0x96 => { self.stx::<ZeroPageXAddressingMode>(); },
+            0x8e => { self.stx::<AbsoluteAddressingMode>(); },
+            // -- Store Y
+            0x84 => { self.sty::<ZeroPageAddressingMode>(); },
+            0x94 => { self.sty::<ZeroPageXAddressingMode>(); },
+            0x8c => { self.sty::<AbsoluteAddressingMode>(); },
             // Nop
             0xea => { self.nop(); },
             // Boolean
@@ -348,6 +357,18 @@ impl CPU {
     fn sta<AM: AddressingMode>(&mut self) {
         let val = self.regs.a;
         println!("Storing 0x{:x} from A", val);
+        AM::store(self, val);
+    }
+
+    fn stx<AM: AddressingMode>(&mut self) {
+        let val = self.regs.x;
+        println!("Storing 0x{:x} from X", val);
+        AM::store(self, val);
+    }
+
+    fn sty<AM: AddressingMode>(&mut self) {
+        let val = self.regs.y;
+        println!("Storing 0x{:x} from Y", val);
         AM::store(self, val);
     }
 
