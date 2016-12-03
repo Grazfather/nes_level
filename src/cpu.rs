@@ -267,6 +267,12 @@ impl CPU {
             0x1d => { self.ora::<AbsoluteXAddressingMode>(); },
             0x19 => { self.ora::<AbsoluteYAddressingMode>(); },
             // -- Eor
+            0x49 => { self.eor::<ImmediateAddressingMode>(); },
+            0x45 => { self.eor::<ZeroPageAddressingMode>(); },
+            0x55 => { self.eor::<ZeroPageXAddressingMode>(); },
+            0x4d => { self.eor::<AbsoluteAddressingMode>(); },
+            0x5d => { self.eor::<AbsoluteXAddressingMode>(); },
+            0x59 => { self.eor::<AbsoluteYAddressingMode>(); },
             // -- Bit set
             // Branches
             0x10 => { self.bpl(); },
@@ -302,6 +308,12 @@ impl CPU {
         let val = AM::load(self);
         println!("OR-ing A 0x{:x} and 0x{:x}", self.regs.a, val);
         self.regs.a |= val;
+    }
+
+    fn eor<AM: AddressingMode>(&mut self) {
+        let val = AM::load(self);
+        println!("EOR-ing A 0x{:x} and 0x{:x}", self.regs.a, val);
+        self.regs.a ^= val;
     }
 
     fn and<AM: AddressingMode>(&mut self) {
