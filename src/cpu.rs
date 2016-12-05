@@ -23,7 +23,7 @@ impl Registers {
 
 impl fmt::Debug for Registers {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Registers a: 0x{:02x}, x: 0x{:02x}, y: 0x{:02x}, s: 0x{:02x}, flags: 0x{:02x}, pc: 0x{:04x}",
+        write!(f, "Registers a: {:#02x}, x: {:#02x}, y: {:#02x}, s: {:#02x}, flags: {:#02x}, pc: {:#04x}",
             self.a, self.x, self.y, self.s, self.flags, self.pc)
     }
 }
@@ -238,7 +238,7 @@ impl CPU {
         // Fetch opcode
         let opcode = self.loadb_move();
         println!("{:?}", self.regs);
-        println!("0x{:x}: Got opcode ${:x}", self.regs.pc - 1, opcode);
+        println!("{:#x}: Got opcode ${:x}", self.regs.pc - 1, opcode);
         // Process opcode
         match opcode {
             // Arithmetic
@@ -374,7 +374,7 @@ impl CPU {
             0xe8 => { self.inx(); },
             0xc8 => { self.iny(); },
             _ => {
-                panic!("Illegal/unimplemented opcode 0x{:02x}", opcode);
+                panic!("Illegal/unimplemented opcode {:#02x}", opcode);
             }
         }
     }
@@ -389,19 +389,19 @@ impl CPU {
 impl CPU {
     fn ora<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
-        println!("OR-ing A 0x{:x} and 0x{:x}", self.regs.a, val);
+        println!("OR-ing A {:#x} and {:#x}", self.regs.a, val);
         self.regs.a |= val;
     }
 
     fn eor<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
-        println!("EOR-ing A 0x{:x} and 0x{:x}", self.regs.a, val);
+        println!("EOR-ing A {:#x} and {:#x}", self.regs.a, val);
         self.regs.a ^= val;
     }
 
     fn and<AM: AddressingMode>(&mut self) {
         let val = AM::load(self);
-        println!("AND-ing A 0x{:x} and 0x{:x}", self.regs.a, val);
+        println!("AND-ing A {:#x} and {:#x}", self.regs.a, val);
         self.regs.a &= val;
     }
 
@@ -485,25 +485,25 @@ impl CPU {
 
     fn sta<AM: AddressingMode>(&mut self) {
         let val = self.regs.a;
-        println!("Storing 0x{:x} from A", val);
+        println!("Storing {:#x} from A", val);
         AM::store(self, val);
     }
 
     fn stx<AM: AddressingMode>(&mut self) {
         let val = self.regs.x;
-        println!("Storing 0x{:x} from X", val);
+        println!("Storing {:#x} from X", val);
         AM::store(self, val);
     }
 
     fn sty<AM: AddressingMode>(&mut self) {
         let val = self.regs.y;
-        println!("Storing 0x{:x} from Y", val);
+        println!("Storing {:#x} from Y", val);
         AM::store(self, val);
     }
 
     fn compare(&mut self, first: u8, second: u8) {
         let result = (first as u16).wrapping_sub(second as u16);
-        println!("Comparing 0x{:x} and 0x{:x}", first, second);
+        println!("Comparing {:#x} and {:#x}", first, second);
         self.set_flag(CARRY_FLAG, (result & 0x100) != 0);
         self.set_flag(ZERO_FLAG, result == 0);
     }
@@ -528,7 +528,7 @@ impl CPU {
 
     fn bpl(&mut self) {
         let offset = ImmediateAddressingMode::load(self);
-        println!("BPL might branch to +0x{:x}", offset);
+        println!("BPL might branch to +{:#x}", offset);
         if (self.regs.flags & NEG_FLAG) == 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
@@ -537,7 +537,7 @@ impl CPU {
 
     fn bmi(&mut self) {
         let offset = ImmediateAddressingMode::load(self);
-        println!("BMI might branch to +0x{:x}", offset);
+        println!("BMI might branch to +{:#x}", offset);
         if (self.regs.flags & NEG_FLAG) != 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
@@ -546,7 +546,7 @@ impl CPU {
 
     fn bvc(&mut self) {
         let offset = ImmediateAddressingMode::load(self);
-        println!("BVC might branch to +0x{:x}", offset);
+        println!("BVC might branch to +{:#x}", offset);
         if (self.regs.flags & OVERFLOW_FLAG) == 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
@@ -555,7 +555,7 @@ impl CPU {
 
     fn bvs(&mut self) {
         let offset = ImmediateAddressingMode::load(self);
-        println!("BVS might branch to +0x{:x}", offset);
+        println!("BVS might branch to +{:#x}", offset);
         if (self.regs.flags & OVERFLOW_FLAG) != 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
@@ -564,7 +564,7 @@ impl CPU {
 
     fn bcc(&mut self) {
         let offset = ImmediateAddressingMode::load(self);
-        println!("BCC might branch to +0x{:x}", offset);
+        println!("BCC might branch to +{:#x}", offset);
         if (self.regs.flags & CARRY_FLAG) == 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
@@ -573,7 +573,7 @@ impl CPU {
 
     fn bcs(&mut self) {
         let offset = ImmediateAddressingMode::load(self);
-        println!("BCS might branch to +0x{:x}", offset);
+        println!("BCS might branch to +{:#x}", offset);
         if (self.regs.flags & CARRY_FLAG) != 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
@@ -582,7 +582,7 @@ impl CPU {
 
     fn bne(&mut self) {
         let offset = ImmediateAddressingMode::load(self);
-        println!("BNE might branch to +0x{:x}", offset);
+        println!("BNE might branch to +{:#x}", offset);
         if (self.regs.flags & ZERO_FLAG) == 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
@@ -591,7 +591,7 @@ impl CPU {
 
     fn beq(&mut self) {
         let offset = ImmediateAddressingMode::load(self);
-        println!("BEQ might branch to +0x{:x}", offset);
+        println!("BEQ might branch to +{:#x}", offset);
         if (self.regs.flags & ZERO_FLAG) != 0 {
             println!("Taking the branch!");
             self.regs.pc += offset as u16;
@@ -620,7 +620,7 @@ impl CPU {
 
     fn jmp(&mut self) {
         let addr = self.loadw_move();
-        println!("Jumping to 0x{:x}", addr);
+        println!("Jumping to {:#x}", addr);
         self.regs.pc = addr;
     }
 }
