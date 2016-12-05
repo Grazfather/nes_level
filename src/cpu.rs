@@ -14,13 +14,6 @@ struct Registers {
     pc: u16,
 }
 
-impl Registers {
-    fn new() -> Registers {
-        let r: Registers = Registers::default();
-        return r
-    }
-}
-
 impl fmt::Debug for Registers {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Registers a: {:#02x}, x: {:#02x}, y: {:#02x}, s: {:#02x}, flags: {:#02x}, pc: {:#04x}",
@@ -203,7 +196,7 @@ impl CPU {
     pub fn new(rom_file: &str) -> CPU {
         let rom = rom::ROM::from_file(rom_file);
         CPU {
-            regs: Registers::new(),
+            regs: Registers::default(),
             memory: mem::Memory::from_rom(rom),
         }
     }
