@@ -23,7 +23,6 @@ impl ROM {
         println!("Got magic {:x}", header.magic);
         let mut prg = vec![0; header.size_prg as usize * 16384];
         let mut chr = vec![0; header.size_chr as usize * 8192];
-        println!("size prg is {}", header.size_prg); // DELETEME
 
         // We want to ignore the trainer, but if it's there we must seek past it.
         if header.has_trainer() { f.seek(SeekFrom::Current(512)).unwrap(); }
